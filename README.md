@@ -31,6 +31,14 @@ $ deltabot init tmp.hjhjdh@testrun.org kjsgfksuhfoe
 ```
 The bot should be ready to use by now, but let's clone this repository and register the example code!
 ```
-git clone https://github.com/janekc/firewall-bot.git
-cd firewall-bot
+$ git clone https://github.com/janekc/firewall-bot.git
+$ cd firewall-bot
+```
+Now let's register our plugin to the bot
+```
+$ deltabot add-module ./src
+```
+And run it
+```
+$ deltabot serve
 ```
