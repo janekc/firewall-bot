@@ -15,7 +15,8 @@ Then create a new venv for our bot and install deltabot
 $ mkdir ~/firewallbot
 $ cd firewallbot
 $ python3 -m venv ./
-$ pip3 install deltabot 
+$ source bin/activate
+$ pip3 install deltabot
 ```
 If that doesn't work you can try to install the deltachat python package by compiling the rust bindings in (deltachat-core-rust)[https://github.com/deltachat/deltachat-core-rust/tree/master/python]
 
