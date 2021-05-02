@@ -17,6 +17,7 @@ $ cd firewallbot
 $ python3 -m venv ./
 $ source bin/activate
 $ pip3 install deltabot
+$ pip3 install segno
 ```
 If that doesn't work you can try to install the deltachat python package by compiling the rust bindings in (deltachat-core-rust)[https://github.com/deltachat/deltachat-core-rust/tree/master/python]
 

@@ -96,7 +96,9 @@ def cmd_setdefault(command, replies):
     Set the default policies for incoming, outgoing and routed. Policies to choose from are allow, deny and reject.
     """
     if check_priv(bot, command.message):
-        pass
+        if command.payload.split() == len(3):
+            incoming, outgoing, routed = command.payload.split()
+            ufw.default(incoming, outgoing, routed)
 
 
 def cmd_add(command, replies):
@@ -106,7 +108,7 @@ def cmd_add(command, replies):
     Returns the raw iptables rule added (incase your interested)
     """
     if check_priv(bot, command.message):
-        pass
+        ufw.add(command.payload)
 
 
 def cmd_delete(command, replies):
@@ -114,7 +116,7 @@ def cmd_delete(command, replies):
     Delete a rule. You can specify the rule itself, the rule number or the string * to delete all rules.
     """
     if check_priv(bot, command.message):
-        pass
+        ufw.delete(command.payload)
 
 
 def cmd_getrules(command, replies):
@@ -122,7 +124,7 @@ def cmd_getrules(command, replies):
     Get a list of the current rules. Returns a dict with the rule numbers as the index.
     """
     if check_priv(bot, command.message):
-        pass
+        ufw.get_rules()
 
 
 def cmd_showlistening(command, replies):
@@ -132,7 +134,7 @@ def cmd_showlistening(command, replies):
     (str transport, str listen_address, int listen_port, str application, dict rules)
     """
     if check_priv(bot, command.message):
-        pass
+        replies.add(ufw.show_listening())
 
 
 def cmd_setlogging(command, replies):
@@ -140,8 +142,12 @@ def cmd_setlogging(command, replies):
     Set the ufw logging level. Choose from: 'on', 'off', 'low', 'medium', 'high', 'full'. Check out man ufw for more info on logging.
     """
     if check_priv(bot, command.message):
-        pass
+        if command.payload in ['on','off','low','medium','high','full']:
+            ufw.set_logging(command.payload)
+        else:
+            replies.add("please specify one of the following options: on,off,low,medium,high,full")
 
+        
 
 def cmd_guided(command, replies):
     """
