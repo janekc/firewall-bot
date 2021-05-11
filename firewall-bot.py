@@ -13,7 +13,7 @@ version = '0.7'
 
 @deltabot_hookimpl
 def deltabot_init(bot):
-    global dbot
+    global  
     dbot = bot
 
     bot.commands.register(name="/enable", func=cmd_enable)
@@ -77,7 +77,7 @@ def cmd_reset(command, replies):
     allow SSH
     allow to 224.0.0.251 app mDNS
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         dbot.logger.info("\nResetting the firewall!\n")
         ufw.reset()
         replies.add("Reset complete! \nDefault rules: \nallow SSH \nallow to 224.0.0.251 app mDNS")
@@ -87,7 +87,7 @@ def cmd_status(command, replies):
     """
     Retuns a dict. Status is either 'active' or 'inactive'. If the firewall is active the default policies and rules list will also be included.
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         replies.add(ufw.status())
 
 
@@ -97,7 +97,7 @@ def cmd_setdefault(command, replies):
 
     TODO: build logic for reject, allow , deny
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         if command.payload.split() == len(3):
             incoming, outgoing, routedds = command.payload.split()
             print(incoming, outgoing, routedds)
@@ -110,7 +110,7 @@ def cmd_add(command, replies):
     Check out man ufw for rule syntax.
     Returns the raw iptables rule added (incase your interested)
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         rule = ufw.add(command.payload)
         dbot.logger.info("\n\Added Rule:\n{}\n".format(rule))
         replies.add("The following iptables rule was added:\n{}".format(rule))
@@ -120,7 +120,7 @@ def cmd_delete(command, replies):
     """
     Delete a rule. You can specify the rule itself, the rule number or the string * to delete all rules.
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         ufw.delete(command.payload)
         dbot.logger.info("\n\Deleted rule:\n{}\n".format(command.payload))
         replies.add("Deleted rule {}".format(command.payload))
@@ -130,7 +130,7 @@ def cmd_getrules(command, replies):
     """
     Get a list of the current rules. Returns a dict with the rule numbers as the index.
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         replies.add(ufw.get_rules())
 
 
@@ -140,7 +140,7 @@ def cmd_showlistening(command, replies):
     Array contains a series of tuples of the following structure:
     (str transport, str listen_address, int listen_port, str application, dict rules)
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         replies.add(ufw.show_listening())
 
 
@@ -148,7 +148,7 @@ def cmd_setlogging(command, replies):
     """
     Set the ufw logging level. Choose from: 'on', 'off', 'low', 'medium', 'high', 'full'. Check out man ufw for more info on logging.
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         if command.payload in ['on','off','low','medium','high','full']:
             print("right")
             ufw.set_logging(command.payload)
@@ -160,7 +160,7 @@ def cmd_guided(command, replies):
     """
     Guided use of the firewall-chatbot
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         pass
 
 

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.7.0
+-----
+
+- first running version
+
+
 0.6.0
 -----
 
