@@ -13,7 +13,7 @@ version = '0.7'
 
 @deltabot_hookimpl
 def deltabot_init(bot):
-    global  
+    global dbot
     dbot = bot
 
     bot.commands.register(name="/enable", func=cmd_enable)
@@ -39,12 +39,12 @@ def deltabot_start(bot: DeltaBot, chat = Chat):
     if dbot.get("issetup") == "yes!" and dbot.get("admgrpid") != '':
         print("Admingroup found")
     else:
-        dbot.logger.warn("Creating an admin group")
+        dbot.logger.warn("Creating a firewall-bot group")
         chat = dbot.account.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
         dbot.set("admgrpid",chat.id)
         dbot.get("issetup", "yes!")
         qr = segno.make(chat.get_join_qr())
-        print("\nPlease scan this qr code to join a verified admin group chat:\n\n")
+        print("\nPlease scan this qr code with your deltachat client to join a verified firewall-bot group chat:\n\n")
         qr.terminal()
 
 
@@ -64,7 +64,7 @@ def cmd_disable(command, replies):
     """
     Disables the ufw firewall and disables on boot.
     """
-    if check_priv(bot, command.message):
+    if check_priv(dbot, command.message):
         dbot.logger.info("\nDisabling the firewall!\n")
         ufw.disable()
         replies.add("Firewall disabled!")
@@ -88,20 +88,34 @@ def cmd_status(command, replies):
     Retuns a dict. Status is either 'active' or 'inactive'. If the firewall is active the default policies and rules list will also be included.
     """
     if check_priv(dbot, command.message):
-        replies.add(ufw.status())
+        status = ufw.status()
+        if status['status'] == 'active':
+            rules = "\n"
+            for rule in status['rules'].keys():
+                rules = rules + "- {}: {}\n".format(rule, status['rules'][rule])
+
+            replies.add("status: {} \n\ndefault tables:\n- incoming: {}\n- outgoing: {}\n- routed: {} \n\nrules: {}".format(status['status'],
+            status['default']['incoming'], status['default']['outgoing'], status['default']['routed'], rules))
+        else:
+            replies.add("status: {}".format(status['status']))
 
 
 def cmd_setdefault(command, replies):
     """
     Set the default policies for incoming, outgoing and routed. Policies to choose from are allow, deny and reject.
-
-    TODO: build logic for reject, allow , deny
     """
     if check_priv(dbot, command.message):
-        if command.payload.split() == len(3):
-            incoming, outgoing, routedds = command.payload.split()
-            print(incoming, outgoing, routedds)
-            #ufw.default(incoming, outgoing, routedds)
+        if len(command.payload.split(',')) == 3:
+            options = ["reject", "allow", "deny"]
+            incoming, outgoing, routedds = command.payload.split(',')
+            outgoing = outgoing.strip()
+            routedds = routedds.strip()
+            if incoming in options and outgoing in options and routedds in options:
+                ufw.default(incoming, outgoing, routedds)
+                dbot.logger.info("\nChanged default tables to: incoming: {} outgoing: {} routed: {}\n".format(incoming, outgoing, routedds))
+                replies.add("Changed default tables to:\n\nincoming: {}\noutgoing: {}\n routed: {}".format(incoming, outgoing, routedds))
+                return
+        replies.add("Please specify one of these options allow/deny/reject for the default tables in the following order: incoming, outgoing, routed")
 
 
 def cmd_add(command, replies):
@@ -112,8 +126,8 @@ def cmd_add(command, replies):
     """
     if check_priv(dbot, command.message):
         rule = ufw.add(command.payload)
-        dbot.logger.info("\n\Added Rule:\n{}\n".format(rule))
-        replies.add("The following iptables rule was added:\n{}".format(rule))
+        dbot.logger.info("\n\Added Rule:\n{}\n".format(command.payload))
+        replies.add("The following iptables rule was added:\n{}".format(command.payload))
 
 
 def cmd_delete(command, replies):
@@ -122,8 +136,8 @@ def cmd_delete(command, replies):
     """
     if check_priv(dbot, command.message):
         ufw.delete(command.payload)
-        dbot.logger.info("\n\Deleted rule:\n{}\n".format(command.payload))
-        replies.add("Deleted rule {}".format(command.payload))
+        dbot.logger.info("\nDeleted rule:\n{}\n".format(command.payload))
+        replies.add("Deleted rule: {}".format(command.payload))
 
 
 def cmd_getrules(command, replies):
@@ -131,7 +145,11 @@ def cmd_getrules(command, replies):
     Get a list of the current rules. Returns a dict with the rule numbers as the index.
     """
     if check_priv(dbot, command.message):
-        replies.add(ufw.get_rules())
+        rules = ""
+        rulesans = ufw.get_rules()
+        for rule in rulesans.keys():
+            rules = rules + "- {}: {}\n".format(rule, rulesans[rule])
+        replies.add(rules)
 
 
 def cmd_showlistening(command, replies):
@@ -141,7 +159,7 @@ def cmd_showlistening(command, replies):
     (str transport, str listen_address, int listen_port, str application, dict rules)
     """
     if check_priv(dbot, command.message):
-        replies.add(ufw.show_listening())
+        replies.add("".format(ufw.show_listening()))
 
 
 def cmd_setlogging(command, replies):
@@ -150,8 +168,9 @@ def cmd_setlogging(command, replies):
     """
     if check_priv(dbot, command.message):
         if command.payload in ['on','off','low','medium','high','full']:
-            print("right")
             ufw.set_logging(command.payload)
+            dbot.logger.info("\nSet logging level to:{}\n".format(command.payload))
+            replies.add("Set logging level to: {}\n".format(command.payload))
         else:
             replies.add("please specify one of the following options: on,off,low,medium,high,full")
 
@@ -168,7 +187,7 @@ def cmd_guided(command, replies):
 
 def check_priv(bot, message):
     if message.chat.is_group() and int(dbot.get('admgrpid')) == message.chat.id:
-            if message.chat.is_protected() and int(message.chat.num_contacts) >= 2:
+            if message.chat.is_protected():
                 return True
     dbot.logger.error("recieved message from wrong or not protected chat.")
     dbot.logger.error("Sender: {}".format(message.get_sender_contact().addr))

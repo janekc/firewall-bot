@@ -1,5 +1,5 @@
 # firewall-bot
-A simple chatbot desinged to configre your firewall using ufw *Uncomplicated Firewall* Commands.
+A simple chatbot desinged to configre your firewall using ufw *Uncomplicated Firewall* commands.
 
 ## step-by-step guide to run your first bot
 We will use [deltabot](https://github.com/deltachat-bot/deltabot) as a chatbot framework.
@@ -7,13 +7,13 @@ The chat betweent client and chatbot is e2e encrypted with [autocrypt](https://a
 To use the bot you will need an email address for the bot and a [Deltachat client](https://get.delta.chat/)
 
 For using ufw with the python module [pyufw](https://github.com/5tingray/pyufw), you have to be root.
-Here's the describtion from pyufw:
-*Your script will have to be run with root privilages. Upon importing the module the ufw security checks will start and you may see some warning messages. The following checks will commence:*
-    -*is setuid or setgid (for non-Linux systems)*
-    -*checks that script is owned by root*
-    -*checks that every component in absolute path are owned by root*
-    -*warn if script is group writable*
-    -*warn if part of script path is group writable*
+Here's the description from pyufw:
+> *Your script will have to be run with root privilages. Upon importing the module the ufw security checks will start and you may see some warning messages. The following checks will commence:*
+>  - *is setuid or setgid (for non-Linux systems)*
+>  - *checks that script is owned by root*
+>  - *checks that every component in absolute path are owned by root*
+>  - *warn if script is group writable*
+>  - *warn if part of script path is group writable*
 ```
 $ sudo su
 ```
