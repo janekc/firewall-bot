@@ -1,46 +1,64 @@
 # firewall-bot
-Deltabot firewall Chatbot
+A simple chatbot desinged to configre your firewall using ufw *Uncomplicated Firewall* Commands.
 
 ## step-by-step guide to run your first bot
-We will use (deltabot)[https://github.com/deltachat-bot/deltabot] as a chatbot framework.
-Let's see how to get one running.
+We will use [deltabot](https://github.com/deltachat-bot/deltabot) as a chatbot framework.
+The chat betweent client and chatbot is e2e encrypted with [autocrypt](https://autocrypt.org/).
+To use the bot you will need an email address for the bot and a [Deltachat client](https://get.delta.chat/)
 
-First let's clone the deltabot repository
+For using ufw with the python module [pyufw](https://github.com/5tingray/pyufw), you have to be root.
+Here's the describtion from pyufw:
+*Your script will have to be run with root privilages. Upon importing the module the ufw security checks will start and you may see some warning messages. The following checks will commence:*
+    -*is setuid or setgid (for non-Linux systems)*
+    -*checks that script is owned by root*
+    -*checks that every component in absolute path are owned by root*
+    -*warn if script is group writable*
+    -*warn if part of script path is group writable*
 ```
-$ cd git
-$ git clone https://github.com/deltachat-bot/deltabot.git
+$ sudo su
 ```
-Then create a new venv for our bot and install deltabot
+If you are installing for the first time it may be a good idea, to save your current iptables rules
 ```
-$ mkdir ~/firewallbot
-$ cd firewallbot
-$ python3 -m venv ./
-$ source bin/activate
-$ pip3 install deltabot
-$ pip3 install segno
+$ iptables-save > /root/iptables-backup
+$ iptables-legacy-save > /root/iptables-backup-legacy
 ```
-If that doesn't work you can try to install the deltachat python package by compiling the rust bindings in (deltachat-core-rust)[https://github.com/deltachat/deltachat-core-rust/tree/master/python]
-
-Now let's create a temporary email address
+You can later reapply them with
 ```
-$ curl -X POST https://testrun.org/new_email\?t\=1w_96myYfKq1BGjb2Yc\&n\=oneweek
+$ iptables-restore /root/iptables-backup
+$ iptables-restore /root/iptables-backup-legacy
 ```
-You will get bach something like this `"email":"tmp.hjhjdh@testrun.org","expiry":"1w","password":"kjsgfksuhfoe","ttl":604800`
-
-Now let's tell the bot to use this email address
+Let's clone this repository
 ```
-$ deltabot init tmp.hjhjdh@testrun.org kjsgfksuhfoe
-```
-The bot should be ready to use by now, but let's clone this repository and register the example code!
-```
-$ git clone https://github.com/janekc/firewall-bot.git
+$ cd ~/git
+$ git clone https://github.com/janekc/firewall-bot
 $ cd firewall-bot
 ```
-Now let's register our plugin to the bot
+And use an pipenv which will help you not to litter your common python installation.
 ```
-$ deltabot add-module ./src
+$ pipenv install
+$ pipenv shell
 ```
-And run it
+Install the current uf master branch
 ```
+$ cd ~/git
+$ git clone -b master https://git.launchpad.net/ufw 
+$ cd ufw
+$ pip install .
+$ pip install deltachat
+$ pip install deltabot
+$ pip install segno
+$ cd firewall-bot
+```
+Now let's initialize the bot with an email address
+```
+$ deltabot init <email address> <password>
+```
+The bot should be ready to use by now, let's see if it works!
+```
+$ deltabot serve
+```
+If it does, you can add the firewall module
+```
+$ deltabot add-module bot.py
 $ deltabot serve
 ```
