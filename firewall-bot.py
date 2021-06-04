@@ -34,12 +34,12 @@ def deltabot_init(bot):
     bot.commands.register(name="/out", func=cmd_InOutOrSkip)
     bot.commands.register(name="/in", func=cmd_InOutOrSkip)
     bot.commands.register(name="/-", func=cmd_InOutOrSkip)
-    bot.commands.register(name="/from", func=cmd_3)
-    bot.commands.register(name="/-from", func=cmd_3)
-    bot.commands.register(name="/to", func=cmd_4)
-    bot.commands.register(name="/-to", func=cmd_4)
-    bot.commands.register(name="/port", func=cmd_5)
-    bot.commands.register(name="/-port", func=cmd_5)
+    bot.commands.register(name="/from", func=cmd_from)
+    bot.commands.register(name="/-from", func=cmd_fromSkip)
+    bot.commands.register(name="/to", func=cmd_to)
+    bot.commands.register(name="/-to", func=cmd_toSkip)
+    bot.commands.register(name="/port", func=cmd_port)
+    bot.commands.register(name="/-port", func=cmd_portSkip)
     bot.commands.register(name="/yes", func=command_correct)
     bot.commands.register(name="/no", func=command_correct)
 
@@ -217,7 +217,11 @@ def cmd_setlogging(command, replies):
                 "please specify one of the following options: on,off,low,medium,high,full"
             )
 
+
 # ======== Guided Mode Commands ===============
+
+UFW_CMD = {"cmd1": "", "cmd2": "", "cmd3": "", "cmd4": "", "cmd5": ""}
+
 
 def cmd_guided(command, replies):
     """
@@ -226,120 +230,176 @@ def cmd_guided(command, replies):
     if check_priv(dbot, command.message):
         dbot.logger.info("\nStarted the Guided Mode!\n")
         replies.add(
-            "Started Guided Mode. What do you want to do with the Firewall? Pleas type /allow /deny or /reject"
+            "Started Guided Mode. What do you want to do with the Firewall?\n\n Pleas type /allow /deny or /reject"
         )
+
+
 def cmd_allowOrdeny(command, replies):
     """
     Guided use of the firewall-chatbot
     """
-    if check_priv(dbot, command.message):
-        if command.message.text.strip() == "/deny":
-            replies.add("Do you want {} In- or Out- going Traffic? Please type /in, /out or /- to skip".format(command.message.text.strip("/")))
-            cmd_1 = command.message.text.strip("/")
-            return
+    global UFW_CMD
 
-        elif command.message.text.strip() == "/allow":
-            replies.add("Do you want {} In- or Out- going Traffic? Please type /in, /out or /- to skip".format(command.message.text.strip("/")))
-            cmd_1 = command.message.text.strip("/")
-            return
+    if check_priv(dbot, command.message):
+        UFW_CMD["cmd1"] = command.message.text.strip("/") + " "
+        replies.add(
+            "Do you want {} In- or Out- going Traffic?\n\n Please type /in, /out or /- to skip".format(
+                UFW_CMD["cmd1"]
+            )
+        )
 
 
 def cmd_InOutOrSkip(command, replies):
     """
     Guided use of the firewall-chatbot
     """
-    if check_priv(dbot, command.message):
-        if command.message.text.strip() == "/in":
-            replies.add("Do you have an specific Ip-address to? Please type the /from IP-Address or /-from if you want to skip")
-            cmd_2 = command.message.text.strip("/")
-            return
+    global UFW_CMD
 
-        elif command.message.text.strip() == "/out":
-            replies.add("Do you have an specific IP-Address from which you will allow/deny? Please type the /from IP-Address or /-from if you want to skip")
-            cmd_2 = command.message.text.strip("/")
-            return
-        else:
-            replies.add("Do you have an specific IP-Address from which you will allow/deny? Please type the /from IP-Address or /-from if you want to skip")
-            cmd_2 = ""
-            return
-
-def cmd_3(command, replies):
-    """
-    Guided use of the firewall-chatbot
-    """
     if check_priv(dbot, command.message):
-        if command.message.text.strip() == "/from":
-            replies.add("Do you have an specific IP-Address to which you will allow/deny? Please type the /to IP-Address or /-to if you want to skip")
-            cmd_3 = command.payload + " "
-            return
-        elif command.message.text.strip() == "/-from":
-            replies.add("Do you have an specific IP-Address to which you will allow/deny? Please type the /to IP-Address or /-to if you want to skip")
-            cmd_3 = "any "
-            return
-
-def cmd_4(command, replies):
-    """
-    Guided use of the firewall-chatbot
-    """
-    if check_priv(dbot, command.message):
-        if command.message.text.strip() == "/to":
-            replies.add("Do you have an specific Port to allow/deny? Please type the /port Portnumber, Portnumber2 or /-port if you want to skip")
-            cmd_4 = command.payload + " "
-            return
-        elif command.message.text.strip() == "/-to":
-            replies.add("Do you have an specific Port to allow/deny? Please type the /port Portnumber, Portnumber2 or /-port if you want to skip")
-            cmd_4 = ""
-            return
-
-def cmd_5(command, replies):
-    """
-    Guided use of the firewall-chatbot
-    """
-    if check_priv(dbot, command.message):
-        if command.message.text.strip() == "/port":
-            replies.add("finish")
-            cmd_5 = "port " + command.payload
-            return
-        elif command.message.text.strip() == "/-port":
-            replies.add("finish")
-            cmd_5 = ""
-            return
-
-def command_correct(command, replies, cmd_1, cmd_2, cmd_3, cmd_4, cmd_5):
-    """
-    TODO: hand over cmd_1, cmd_2, cmd_3, cmd_4, cmd_5..
-    Guided use of the firewall-chatbot
-    """
-    dbot.logger.info(
-        "Build follow command: "
-        + cmd_1
-        + cmd_2
-        + cmd_3
-        + cmd_4
-        + cmd_5
-    )
-    replies.add(
-        "Is this command right?"
-        + cmd_1
-        + cmd_2
-        + cmd_3
-        + cmd_4
-        + cmd_5
-        + "right? type /yes or /no"
-    )
-    if check_priv(dbot, command.message):
-        if command == "/yes":
+        if command.message.text.strip() is "/in" or "/out":
+            UFW_CMD["cmd2"] = command.message.text.strip("/") + " "
             replies.add(
-                "The Following Rule will be added to the ufw firewall"
-                + cmd_1
-                + cmd_2
-                + cmd_3
-                + cmd_4
-                + cmd_5
+                "Do you have an specific Ip-address from which you will {}traffic?\n\n Please type the /from IP-Address or \n /-from if you want to skip".format(
+                    UFW_CMD["cmd1"]
+                )
             )
-            ufw.add(cmd_1 + cmd_2 + cmd_3 + cmd_4 + cmd_5)
-        else:
-            replies.add("Please start the guided mode again")
+
+        if command.message.text.strip() == "/-":
+            UFW_CMD["cmd2"] = ""
+            replies.add(
+                "Do you have an specific IP-Address from which you will {}traffic?\n\n Please type the /from IP-Address or \n /-from if you want to skip".format(
+                    UFW_CMD["cmd1"]
+                )
+            )
+
+
+def cmd_from(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    """
+    global UFW_CMD
+
+    if check_priv(dbot, command.message):
+        UFW_CMD["cmd3"] = "from " + command.payload + " "
+        replies.add(
+            "Do you have an specific IP-Address to which you will {}traffic?\n\n Please type the /to IP-Address or /-to if you want to skip".format(
+                UFW_CMD["cmd1"]
+            )
+        )
+
+
+def cmd_fromSkip(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    """
+    global UFW_CMD
+
+    if check_priv(dbot, command.message):
+        UFW_CMD["cmd3"] = "from any "
+        replies.add(
+            "Do you have an specific IP-Address to which you will {}traffic?\n\n Please type the /to IP-Address or /-to if you want to skip".format(
+                UFW_CMD["cmd1"]
+            )
+        )
+
+
+def cmd_to(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    """
+    global UFW_CMD
+
+    if check_priv(dbot, command.message):
+        UFW_CMD["cmd4"] = "to " + command.payload + " "
+        replies.add(
+            "Do you have an specific Port to {}?\n\n Please type the /port Portnumber, Portnumber2 or /-port if you want to skip".format(
+                UFW_CMD["cmd1"]
+            )
+        )
+
+
+def cmd_toSkip(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    """
+    global UFW_CMD
+
+    if check_priv(dbot, command.message):
+        UFW_CMD["cmd4"] = "to any "
+        replies.add(
+            "Do you have an specific Port to {}?\n\n Please type the /port Portnumber, Portnumber2 or /-port if you want to skip".format(
+                UFW_CMD["cmd1"]
+            )
+        )
+
+
+def cmd_port(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    """
+    global UFW_CMD
+
+    if check_priv(dbot, command.message):
+        UFW_CMD["cmd5"] = "port " + command.payload
+        ufwcommand = command_build()
+        dbot.logger.info("Build follow command: {}".format(ufwcommand))
+        replies.add(
+            "Is this command '{}' right?\n\n type /yes or /no".format(ufwcommand)
+        )
+
+
+def cmd_portSkip(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    """
+    global UFW_CMD
+
+    if check_priv(dbot, command.message):
+        UFW_CMD["cmd5"] = ""
+        ufwcommand = command_build()
+        dbot.logger.info("Build follow command:\n\n {}".format(ufwcommand))
+        replies.add(
+            "Is this command '{}' right?\n\n type /yes or /no".format(ufwcommand)
+        )
+
+
+def command_build():
+    global UFW_CMD
+    ufwcommand = (
+        UFW_CMD["cmd1"]
+        + UFW_CMD["cmd2"]
+        + UFW_CMD["cmd3"]
+        + UFW_CMD["cmd4"]
+        + UFW_CMD["cmd5"]
+    )
+    return ufwcommand
+
+
+def command_correct(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    TODO: Escaping the ufwcommand befor ufw.add()
+    """
+    global UFW_CMD
+
+    if check_priv(dbot, command.message):
+        if command.message.text.strip() == "/yes":
+            ufwcommand = (
+                UFW_CMD["cmd1"]
+                + UFW_CMD["cmd2"]
+                + UFW_CMD["cmd3"]
+                + UFW_CMD["cmd4"]
+                + UFW_CMD["cmd5"]
+            )
+            replies.add(
+                "The Following Rule will be added to the ufw firewall:\n\n {}".format(
+                    ufwcommand
+                )
+            )
+            ufw.add(ufwcommand)
+        if command.message.text.strip() == "/no":
+            replies.add("Please start the Guided Mode again")
+
 
 # ======== Utilities ===============
 
@@ -353,14 +413,3 @@ def check_priv(bot, message):
     dbot.logger.error("Chat: {}".format(message.chat.get_name()))
     dbot.logger.error("Message: {}".format(message.text))
     return False
-
-
-if __name__ == "__main__":
-
-    cmd_1 = cmd_allowOrdeny(command, replies)
-    cmd_2 = cmd_InOutOrSkip(command, replies, cmd_1)
-    cmd_3 = cmd_3(command, replies, cmd_1)
-    cmd_4 = cmd_4(command, replies, cmd_1)
-    cmd_5 = cmd_5(command, replies)
-    command_correct(command, replies, cmd_1, cmd_2, cmd_3, cmd_4, cmd_5)
-
