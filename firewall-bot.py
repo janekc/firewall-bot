@@ -5,7 +5,8 @@ from deltachat import Chat, Contact, Message
 import socket
 import pyufw as ufw
 import segno
-
+import nmap3
+import json
 
 version = "0.7"
 
@@ -29,6 +30,7 @@ def deltabot_init(bot):
     bot.commands.register(name="/setlogging", func=cmd_setlogging)
 
     bot.commands.register(name="/guided", func=cmd_guided)
+    bot.commands.register(name="/overview", func=cmd_sysOverView)
     bot.commands.register(name="/allow", func=cmd_allowOrdeny)
     bot.commands.register(name="/deny", func=cmd_allowOrdeny)
     bot.commands.register(name="/out", func=cmd_InOutOrSkip)
@@ -221,7 +223,7 @@ def cmd_setlogging(command, replies):
 # ======== Guided Mode Commands ===============
 
 UFW_CMD = {"cmd1": "", "cmd2": "", "cmd3": "", "cmd4": "", "cmd5": ""}
-
+nmap = nmap3.NmapHostDiscovery()
 
 def cmd_guided(command, replies):
     """
@@ -232,7 +234,16 @@ def cmd_guided(command, replies):
         replies.add(
             "Started Guided Mode. What do you want to do with the Firewall?\n\n Pleas type /allow /deny or /reject"
         )
-
+def cmd_sysOverView(command, replies):
+    """
+    Guided use of the firewall-chatbot
+    """
+    if check_priv(dbot, command.message):
+        dbot.logger.info("\nStarted the NMAP Command\n")
+        nmapscan = nmap.nmap_portscan_only("localhost", args="-sV")
+        results = json.dumps(nmapscan, indent=4, sort_keys=True)
+        dbot.logger.info("NMAP-Result: {}".format(str(results)))
+        replies.add("NMAP-Result: {}".format(str(results)))
 
 def cmd_allowOrdeny(command, replies):
     """
