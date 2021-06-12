@@ -41,12 +41,11 @@ $ pipenv shell
 Install the current uf master branch
 ```
 $ cd ~/git
-$ git clone -b master https://git.launchpad.net/ufw 
+$ git clone -b master https://git.launchpad.net/ufw
 $ cd ufw
 $ pip install .
 $ pip install deltachat
 $ pip install deltabot
-$ pip install segno
 $ cd firewall-bot
 ```
 Now let's initialize the bot with an email address
