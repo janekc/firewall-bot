@@ -228,7 +228,7 @@ $ vi /etc/logrotate.d/fwbot
 ```
 - Run the rotation dry to make sure there are no errors:
 ```
-$ logrotate --d /etc/logrotate.d/fwbot
+$ logrotate -d /etc/logrotate.d/fwbot
 ```
 - Run the rotation once:
 ```
