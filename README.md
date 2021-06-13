@@ -42,6 +42,10 @@ Assuming your installation is up to date, if not consider doing:
 ```
 $ apt-get update && apt-get upgrade
 ```
+To install pipenv via the installer script you will need an existing python installation as well as the corresponding python distutils. Ubuntu 20.04.02 ships with Python 3.8.5 which will need the python3-distutils:
+```
+$ apt install python3-distutils
+```
 Install git and packages needed for pyenv to build python:
 ```
 $ apt install git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
@@ -66,14 +70,21 @@ $ exit
 $ sudo su -
 $ pyenv --version
 ```
-
-
-If you are installing for the first time it may be a good idea, to save your current iptables rules
+To install pipenv, make sure to change the last part of the following command to reference your python installation (e.g. python instead of python3 in case you might have aliased python3)
+```
+$ curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python3
+```
+To check if pipenv was installed successfully, run:
+```
+$ pipenv --version
+```
+Now all prerequisits are met and we can continue to install the firewall-bot.
+If you are not installing on a fresh system and maybe already have iptables rules in place, it may be a good idea to save those rules:
 ```
 $ iptables-save > /root/iptables-backup
 $ iptables-legacy-save > /root/iptables-backup-legacy
 ```
-You can later reapply them with
+You can later reapply them with:
 ```
 $ iptables-restore /root/iptables-backup
 $ iptables-restore /root/iptables-backup-legacy
@@ -82,26 +93,43 @@ $ iptables-restore /root/iptables-backup-legacy
 ```
 $ mkdir /root/fwbot
 ```
-Let's clone this repository
+- Move into your project directory, clone the firewall-bot repository and move into the repository directory:
 ```
-$ cd ~/git
+$ cd /root/fwbot
 $ git clone https://github.com/janekc/firewall-bot
-$ cd firewall-bot
+$ cd /root/fwbot/firewall-bot
 ```
-And use an pipenv which will help you not to litter your common python installation.
+- Use pipenv to install the firewall-bot and its required packages and version of python:
 ```
 $ pipenv install
+```
+Answer 'Y' if you're asked to install CPython with Pyenv.
+- Activate your newly created python environment:
+```
 $ pipenv shell
 ```
-Install the current uf master branch
+- Move into your project directory, clone the ufw master repository, move into the repository directory and use pip to install ufw (you might be able to get by using a version of ufw that is already installed on your system or available via apt - we recommend using the most recent master):
 ```
-$ cd ~/git
+$ cd /root/fwbot
 $ git clone -b master https://git.launchpad.net/ufw
-$ cd ufw
+$ cd /root/fwbot/ufw
 $ pip install .
-$ pip install deltachat
+```
+- Move back into your project directory:
+```
+$ cd /root/fwbot
+```
+- Use pip to install deltachat from devpi:
+```
+$ pip install --pre -i https://m.devpi.net/dc/master deltachat
+```
+- Use pip to install deltabot:
+```
 $ pip install deltabot
-$ cd firewall-bot
+```
+- Move into your firewall-bot repository directory:
+```
+$ cd /root/fwbot/firewall-bot
 ```
 Now let's initialize the bot with an email address
 ```
@@ -113,7 +141,7 @@ $ deltabot serve
 ```
 If it does, you can add the firewall module
 ```
-$ deltabot add-module bot.py
+$ deltabot add-module firewall-bot.py
 $ deltabot serve
 ```
 Post-Installation (as root/sudo):
