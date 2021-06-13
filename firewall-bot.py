@@ -348,7 +348,7 @@ def cmd_allowOrdeny(command, replies):
     if check_priv(dbot, command.message):
         UFW_CMD["cmd1"] = command.message.text.strip("/") + " "
         replies.add(
-            "Do you want {} In- or Out- going Traffic?\n\n Please type /in, /out or /- to skip".format(
+            "Do you want to {} Incoming or Outgoing Traffic?\n\n Please type /in, /out or /- to skip".format(
                 UFW_CMD["cmd1"]
             )
         )
@@ -356,7 +356,7 @@ def cmd_allowOrdeny(command, replies):
 
 def cmd_InOutOrSkip(command, replies):
     """
-    With /in, /out or /- is defined which kind of traffic it is. outgoing (/out) or incoming (/in). With the command /- (stands for skip) you can skip this step. By default, incoming traffic is meant.
+    With /in, /out or /- is defined which kind of traffic it is. outgoing (/out) or incoming (/in). With the command /- (stands for skip) you can skip this step. By default, incoming traffic is assumed.
     """
     global UFW_CMD
 
@@ -520,3 +520,5 @@ def check_priv(bot, message):
     dbot.logger.error("Chat: {}".format(message.chat.get_name()))
     dbot.logger.error("Message: {}".format(message.text))
     return False
+
+
