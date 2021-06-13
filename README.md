@@ -74,7 +74,7 @@ If it does, you can add the firewall module
 $ deltabot add-module bot.py
 $ deltabot serve
 ```
-Post-Installation (as root/sudo):
+Post-Installation (as root/sudo):  
 Make sure that no matter how restrictive your firewall-settings may be, the firewall-bot will always be able to fetch emails:
 Insert the following lines into /etc/ufw/before.rules
 ```
