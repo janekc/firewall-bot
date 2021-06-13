@@ -102,7 +102,7 @@ The output should look sth like this: /root/.local/share/virtualenvs/firewall-bo
 You will need this full path to put in your service file. Exit the python environment to continue.
 - Create a service file:
 ```
-vi /etc/systemd/system/fwbot.service
+$ vi /etc/systemd/system/fwbot.service
 ```
 - Insert the following into the service file:
 ```
@@ -140,7 +140,7 @@ $ systemctl restart rsyslog
 For the cherry on top, setup logrotation for fwbot-logging:
 - Create a logrotate file:
 ```
-vi /etc/logrotate.d/fwbot
+$ vi /etc/logrotate.d/fwbot
 ```
 - Insert the following into the logrotate file (daily zipping and max 5 logs - feel free to adapt this to your liking):
 ```
@@ -158,9 +158,9 @@ vi /etc/logrotate.d/fwbot
 ```
 - Run the rotation dry to make sure there are no errors:
 ```
-logrotate --d /etc/logrotate.d/fwbot
+$ logrotate --d /etc/logrotate.d/fwbot
 ```
 - Run the rotation once:
 ```
-logrotate --force /etc/logrotate.d/fwbot
+$ logrotate --force /etc/logrotate.d/fwbot
 ```
