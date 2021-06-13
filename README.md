@@ -74,3 +74,93 @@ If it does, you can add the firewall module
 $ deltabot add-module bot.py
 $ deltabot serve
 ```
+Post-Installation (as root/sudo):
+Make sure that no matter how restrictive your firewall-settings may be, the firewall-bot will always be able to fetch emails:
+Insert the following lines into /etc/ufw/before.rules
+```
+# FWBOT
+-A ufw-before-output -p tcp --dport 993 -j ACCEPT
+-A ufw-before-output -p tcp --dport 465 -j ACCEPT
+-A ufw-before-output -p udp --dport 53 -j ACCEPT
+```
+Additionally, if you want to make sure you always have SSH access, add this line ($PORT being the port you have set in your sshd config)
+```
+# SSHACCESS
+-A ufw-before-input -p tcp --dport $PORT -j ACCEPT
+```
+Have the firewall-bot run as a system service:
+- Move into your firewall-bot directory and activate the projects python environment:
+```
+$ cd *yourprojectdirectory*/firewall-bot
+$ pipenv shell
+```
+- Display the path to the deltabot installation:
+```
+$ which deltabot
+```
+The output should look sth like this: /root/.local/share/virtualenvs/firewall-bot-DJhpAnUw/bin/deltabot.
+You will need this full path to put in your service file. Exit the python environment to continue.
+- Create a service file:
+```
+vi /etc/systemd/system/fwbot.service
+```
+- Insert the following into the service file:
+```
+[Unit]
+Description=DeltaChatFirewallBot
+
+[Service]
+Type=simple
+ExecStart=*your-path-to-deltabot* serve
+Environment=PYTHONUNBUFFERED=1
+SyslogIdentifier=fwbot
+
+[Install]
+WantedBy=multi-user.target
+```
+- After every change to service files do:
+```
+$ systemctl daemon-reload
+```
+Now you can use systemctl start/stop/status/enable/disable/restart/... fwbot.service like any other service.
+At this point all "output" (stdout, stderr, print-statements) will be redirected by systemctl to syslog (/var/log/syslog).
+You may want to change this behaviour:
+- Open the syslog config
+```
+$ vi /etc/rsyslog.d/50-default.conf
+```
+- Insert the following into the config:
+```
+:programname,isequal,"fwbot"  /var/log/fwbot.log
+```
+- Restart the rsyslog daemon:
+```
+$ systemctl restart rsyslog
+```
+For the cherry on top, setup logrotation for fwbot-logging:
+- Create a logrotate file:
+```
+vi /etc/logrotate.d/fwbot
+```
+- Insert the following into the logrotate file (daily zipping and max 5 logs - feel free to adapt this to your liking):
+```
+/var/log/fwbot.log {
+    su root syslog
+    daily
+    rotate 5
+    compress
+    delaycompress
+    missingok
+    postrotate
+        systemctl restart rsyslog > /dev/null
+    endscript
+}
+```
+- Run the rotation dry to make sure there are no errors:
+```
+logrotate --d /etc/logrotate.d/fwbot
+```
+- Run the rotation once:
+```
+logrotate --force /etc/logrotate.d/fwbot
+```
