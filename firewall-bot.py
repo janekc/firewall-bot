@@ -63,7 +63,7 @@ def deltabot_start(bot: DeltaBot, chat=Chat):
             "Admin group on {}".format(socket.gethostname()), contacts=[], verified=True
         )
         dbot.set("admgrpid", chat.id)
-        dbot.get("issetup", "yes!")
+        dbot.set("issetup", "yes!")
         qr = segno.make(chat.get_join_qr())
         print(
             "\nPlease scan this qr code with your deltachat client to join a verified firewall-bot group chat:\n\n"
