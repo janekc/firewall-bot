@@ -9,7 +9,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from datetime import datetime, timedelta
 
-db = DBManager("data/logparse.db")
+db = DBManager("logparse.db")
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
 
     try:
         while True:
-            time.sleep(1)
+            time.sleep(40)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
@@ -33,11 +33,11 @@ def parse(file, bytecursor, lastseen):
         for line in logfile.readlines():
             matchMail = re.search(r'\[UFW BLOCK\] \w*=\w*( \w*=){2}[a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){13} SRC=(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}', line)
             if matchMail:
-                ipaddress = matchMail.group()[40:]
-                timestampstring = re.match(r'\[\d*.\d*\]', line)
+                counter = 0
+                ipaddress = matchMail.group()[80:]
+                timestampstring = re.search(r'\[\d*.\d*\]', line)
                 if timestampstring:
-                    timestamp = datetime.fromisoformat(timestampstring.group()).timestamp()
-                    counter = 0
+                    timestamp = int(timestampstring.group()[1:-8])
                 if lastseen.get(ipaddress) is not None:
                     counter, timestamp_old = lastseen.get(ipaddress)
                     if timestamp - timestamp_old <= timedelta(hours=1).total_seconds():
@@ -64,13 +64,13 @@ class MyHandler(FileSystemEventHandler):
         self.last_bytecursor = 0
         self.lastseen = {}
         self.logfile = logfile
-        print("-------------------------------------------------------------------------")
+        print("---------------------------------------------------------------------------------")
         print("|\tipaddress\t\tblocksinlasthour\t\ttimestamp       |")
-        print("-------------------------------------------------------------------------")
+        print("---------------------------------------------------------------------------------")
 
 
     def on_modified(self, event):
-        if datetime.now() - self.last_modified < timedelta(seconds=1):
+        if datetime.now() - self.last_modified < timedelta(seconds=40):
             return
         else:
             self.last_modified = datetime.now()
@@ -79,4 +79,4 @@ class MyHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
