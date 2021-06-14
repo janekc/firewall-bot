@@ -1,5 +1,5 @@
 # firewall-bot
-A simple chatbot desinged to configre your firewall using ufw *Uncomplicated Firewall* commands.
+A simple chatbot designed to configure your firewall using ufw *Uncomplicated Firewall* commands.
 
 ## step-by-step guide to run your first bot
 We will use [deltabot](https://github.com/deltachat-bot/deltabot) as a chatbot framework.
@@ -17,7 +17,7 @@ Here's the description from pyufw:
 ```
 $ sudo su
 ```
-If you are installing for the first time it may be a good idea, to save your current iptables rules
+If you are installing for the first time it may be a good idea to save your current iptables rules
 ```
 $ iptables-save > /root/iptables-backup
 $ iptables-legacy-save > /root/iptables-backup-legacy
