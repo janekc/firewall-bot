@@ -31,7 +31,8 @@ There are (at least) 3 ways to your own firewall-bot:
 
 In any case, please take a look at the last steps of the installation - even using pipenv you will have to manually install deltachat and subsequently deltabot.
 
-The following step-by-step guide has been tested on a fresh installation of Ubuntu 20.04.2 LTS (generic kernel), it *should* also apply to lower versions and/or other debian-based distributions (but not guaranteed...).
+The following step-by-step guide has been tested on a fresh installation of Ubuntu 20.04.2 LTS (generic kernel), it *should* also apply to lower versions and/or other debian-based distributions (but not guaranteed...).  
+IPv6 will be disabled!
 
 - Make sure you are actually logged in as root (using sudo or sudo su will probably result in problems with PATH)
 ```
@@ -144,9 +145,23 @@ If it does, you can add the firewall module
 $ deltabot add-module firewall-bot.py
 $ deltabot serve
 ```
-Post-Installation (as root/sudo):
+Post-Installation (as root/sudo):  
+- Disable IPv6 in ufw:
+Open the following file:
+```
+$ vi /etc/default/ufw
+```
+Change the line:
+```
+IPV6=yes
+```
+to:
+```
+IPV6=no
+```
 Make sure that no matter how restrictive your firewall-settings may be, the firewall-bot will always be able to fetch emails:
-Insert the following lines into /etc/ufw/before.rules
+Insert the following lines into /etc/ufw/before.rules  
+This part is IMPORTANT - failing to ensure the bots communication can leave you locked out of your system!
 ```
 # FWBOT
 -A ufw-before-output -p tcp --dport 993 -j ACCEPT
@@ -158,7 +173,8 @@ Additionally, if you want to make sure you always have SSH access, add this line
 # SSHACCESS
 -A ufw-before-input -p tcp --dport $PORT -j ACCEPT
 ```
-Have the firewall-bot run as a system service:
+Have the firewall-bot run as a system service:  
+Make sure that you scan the QR-code when running "deltabot serve", you won't have access to the correct display of the code when it is written to syslog (or your own logfile) instead of stdout!
 - Move into your firewall-bot directory and activate the projects python environment:
 ```
 $ cd *yourprojectdirectory*/firewall-bot
