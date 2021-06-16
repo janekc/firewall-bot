@@ -2,6 +2,8 @@
 from deltabot.hookspec import deltabot_hookimpl
 from deltabot import DeltaBot
 from deltachat import Chat, Contact, Message
+from logdb import DBManager
+import matplotlib.pyplot as plt
 import socket
 import pyufw as ufw
 import segno
@@ -125,7 +127,7 @@ def cmd_status(command, replies):
                 rules = rules + "- {}: {}\n".format(rule, status["rules"][rule])
 
             replies.add(
-                "status: {} \n\ndefault tables:\n- incoming: {}\n- outgoing: {}\n- routed: {} \n\nrules: {}".format(
+                "status: {} \n\ndefault tables:\n- incoming: {}\n- outgoing: {}\n- routed: {} \n\nrules: {} \n\n Most blocked IP-addresses:".format(
                     status["status"],
                     status["default"]["incoming"],
                     status["default"]["outgoing"],
@@ -133,6 +135,7 @@ def cmd_status(command, replies):
                     rules,
                 )
             )
+            replies.add(filename=create_graph())
         else:
             replies.add("status: {}".format(status["status"]))
 
@@ -520,3 +523,36 @@ def check_priv(bot, message):
     dbot.logger.error("Chat: {}".format(message.chat.get_name()))
     dbot.logger.error("Message: {}".format(message.text))
     return False
+
+
+def plotsort(lastseen, maxvalue):
+    path = os.path.join(os.path.dirname(dbot.account.db_path), __name__)
+    filename = os.path.join(path, 'plot.png')
+    sorr = sorted(lastseen, key=lambda ipaddress: lastseen[ipaddress][0], reverse=True)
+    labels = []
+    sizes = []
+    for name in sorr:
+        print("{} , {} , {}, {}, {}".format(name, lastseen[name][0], lastseen[name][1], lastseen[name][2], lastseen[name][3]))
+        labels.append('{}, {}'.format(name, lastseen[name][2]))
+        sizes.append(int((lastseen[name][0] / maxvalue)*100))
+    fig1, ax1 = plt.subplots()
+    ax1.pie(sizes, labels=labels, autopct='%1.1f%%',
+            shadow=True, startangle=90)
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.savefig(filename)
+    return filename
+
+
+def create_graph():
+    db = DBManager('logparse.db')
+    dblastseen = {}
+    alld = db.get_allblockcount()
+    maxvalue = 0
+    for row in alld:
+            maxvalue += row[1]
+    print(maxvalue)
+    for row in alld:
+        if row[1] >= 10:
+            dblastseen[row[0]] = (row[1], row[2], row[3], row[4])
+            maxvalue += row[1]
+    return plotsort(dblastseen, maxvalue)

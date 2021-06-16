@@ -14,23 +14,25 @@ class DBManager:
         self._execute('''CREATE TABLE IF NOT EXISTS ipcount
                         (ip TEXT PRIMARY KEY,
                          blockshour INTEGER,
-                         time INTEGER)''')
-        self.db.execute(
-                '''CREATE TABLE IF NOT EXISTS logfiles
-                (id INTEGER PRIMARY KEY,
-                startdate INTEGER,
-                bytecursor INTEGER)''')
+                         time INTEGER,
+                         coutry TEXT,
+                         city TEXT
+                         )''')
 
     def _execute(self, statement, args=()):
         with self.db:
             return self.db.execute(statement, args)
 
-    def store_mailcount(self, ip, blockshour, timestamp):
-        self._execute('REPLACE INTO ipcount VALUES (?,?,?)', (ip, blockshour, timestamp))
+    def store_blockcount(self, ip, blockshour, timestamp, country, city):
+        self._execute('REPLACE INTO ipcount VALUES (?,?,?,?,?)', (ip, blockshour, timestamp, country, city))
 
-    def get_mailuser(self, key):
+    def get_blockcount(self, key):
         row = self._execute(
             'SELECT * FROM ipcount WHERE ip=?',
             (key,),
         ).fetchone()
-        return row['date'] if row else None
+        return row if row else None
+    
+    def get_allblockcount(self):
+        alld = self._execute('SELECT * FROM ipcount')
+        return alld

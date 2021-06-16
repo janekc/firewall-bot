@@ -8,14 +8,30 @@ from logdb import DBManager
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from datetime import datetime, timedelta
+from ip2geotools.databases.noncommercial import DbIpCity
 
-db = DBManager("logparse.db")
+db = DBManager('logparse.db')
 
 
-def main():
-    event_handler = MyHandler('/var/log/syslog')
+def main(argv):
+    path = '.'
+    try:
+        opts, args = getopt.getopt(argv,"hd:",["dir="])
+    except getopt.GetoptError:
+        print('__init__.py -d <watched directory>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print('__init__.py -d <watched directory>')
+            sys.exit()
+        elif opt in ("-d", "--dir"):
+            path = arg
+
+    syslogfile = find("syslog", path)
+
+    event_handler = MyHandler(syslogfile)
     observer = Observer()
-    observer.schedule(event_handler, path='/var/log/syslog', recursive=False)
+    observer.schedule(event_handler, path=syslogfile, recursive=False)
     observer.start()
 
     try:
@@ -24,6 +40,16 @@ def main():
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
+
+
+def find(name, path):
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            print("found log file: {}".format(os.path.join(root, name)))
+            return os.path.join(root, name)
+        else:
+            print("no log file found")
+            sys.exit()
 
 
 def parse(file, bytecursor, lastseen):
@@ -53,8 +79,14 @@ def parse(file, bytecursor, lastseen):
 def storetodb(lastseen):
     for ipaddress in lastseen:
         counter, timestamp = lastseen.get(ipaddress)
-        print("\t{}\t\t{}\t\t{}".format(ipaddress, counter, timestamp))
-        db.store_mailcount(ipaddress, counter, timestamp)
+        if counter >= 2:
+            try:
+                response = DbIpCity.get(ipaddress, api_key='free')
+            except Exception:
+                response.country = "NA"
+                response.city = "NA"
+            db.store_blockcount(ipaddress, counter, timestamp, response.country, response.city)
+            print("\t{}\t\t{}\t\t{}\t\t{}\t\t{}".format(ipaddress, counter, timestamp, response.country, response.city))
     print("\n")
 
 
@@ -79,4 +111,4 @@ class MyHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
