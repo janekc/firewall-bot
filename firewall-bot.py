@@ -2,6 +2,7 @@
 from deltabot.hookspec import deltabot_hookimpl
 from deltabot import DeltaBot
 from deltachat import Chat, Contact, Message
+import matplotlib.pyplot as plt
 import socket
 import pyufw as ufw
 import segno
@@ -123,16 +124,16 @@ def cmd_status(command, replies):
             rules = "\n"
             for rule in status["rules"].keys():
                 rules = rules + "- {}: {}\n".format(rule, status["rules"][rule])
-
-            replies.add(
-                "status: {} \n\ndefault tables:\n- incoming: {}\n- outgoing: {}\n- routed: {} \n\nrules: {}".format(
+            rules = "status: {} \n\ndefault tables:\n- incoming: {}\n- outgoing: {}\n- routed: {} \n\nrules: {}".format(
                     status["status"],
                     status["default"]["incoming"],
                     status["default"]["outgoing"],
                     status["default"]["routed"],
                     rules,
                 )
-            )
+            replies.add(rules)
+            create_textpic(rules)
+            replies.add(filename="plot.png")
         else:
             replies.add("status: {}".format(status["status"]))
 
@@ -509,6 +510,10 @@ def command_correct(command, replies):
 
 
 # ======== Utilities ===============
+def create_textpic(text):
+    fig = plt.figure(figsize=(2.5, 0.75))
+    text = fig.text(0.5, 0.5, text, ha='center', va='center', size=20)
+    plt.savefig('plot.png')
 
 
 def check_priv(bot, message):
