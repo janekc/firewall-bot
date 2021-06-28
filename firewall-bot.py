@@ -52,11 +52,14 @@ def deltabot_init(bot):
 def deltabot_start(bot: DeltaBot, chat=Chat):
     """
     Runs every time the bot starts and checks if it was already set up.
-    If not, print a QR-code to terminal. Admins can scan it and get added to an admingroup.
+    Prints a QR-code to terminal. Admins can scan it and get added to an admingroup.
     Where Members can send commands to the bot.
     """
+    chat = None
     if dbot.get("issetup") == "yes!" and dbot.get("admgrpid") != "":
-        print("Admingroup found")
+        chat = dbot.account.get_chat_by_id(int(dbot.get("admgrpid")))
+        print("Admingroup found\n")
+   
     else:
         dbot.logger.warn("Creating a firewall-bot group")
         chat = dbot.account.create_group_chat(
@@ -64,11 +67,12 @@ def deltabot_start(bot: DeltaBot, chat=Chat):
         )
         dbot.set("admgrpid", chat.id)
         dbot.set("issetup", "yes!")
-        qr = segno.make(chat.get_join_qr())
-        print(
-            "\nPlease scan this qr code with your deltachat client to join a verified firewall-bot group chat:\n\n"
-        )
-        qr.terminal()
+
+    qr = segno.make(chat.get_join_qr())
+    print(
+        "\nPlease scan this qr code with your deltachat client to join a verified firewall-bot group chat:\n\n"
+    )
+    qr.terminal()
 
 
 # ======== Commands ===============
