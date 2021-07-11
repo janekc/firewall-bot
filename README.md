@@ -1,5 +1,5 @@
 # firewall-bot
-A simple chatbot designed to configure your firewall using ufw *Uncomplicated Firewall* commands.
+A simple chatbot designed to configure your firewall using ufw *Uncomplicated Firewall* to configure iptables/nftables.
 
 ## step-by-step guide to run your first bot
 We will use [deltabot](https://github.com/deltachat-bot/deltabot) as a chatbot framework.
@@ -14,14 +14,7 @@ The init routine will then pick up the needed information automatically and set 
 Of course there are different ways to accomplish this (autoconfig/autodiscover/.well-known etc.) but deltabot init will try pretty much every possible way to setup the given email address
 
 Caveat 2:
-For using ufw with the python module [pyufw](https://github.com/5tingray/pyufw), you have to be root.
-Here's the description from pyufw:
-> *Your script will have to be run with root privilages. Upon importing the module the ufw security checks will start and you may see some warning messages. The following checks will commence:*
->  - *is setuid or setgid (for non-Linux systems)*
->  - *checks that script is owned by root*
->  - *checks that every component in absolute path are owned by root*
->  - *warn if script is group writable*
->  - *warn if part of script path is group writable*
+For using ufw, you have be root while installing and the bot (started manually or as a service) has to run as root.
 
 INSTALLATION:
 There are (at least) 3 ways to your own firewall-bot:
@@ -31,33 +24,32 @@ There are (at least) 3 ways to your own firewall-bot:
 
 In any case, please take a look at the last steps of the installation - even using pipenv you will have to manually install deltachat and subsequently deltabot.
 
-The following step-by-step guide has been tested on a fresh installation of Ubuntu 20.04.2 LTS (generic kernel), it *should* also apply to lower versions and/or other debian-based distributions (but not guaranteed...).  
-IPv6 will be disabled!
+The following step-by-step guide has been tested on a fresh installation of Ubuntu 20.04.2 LTS (generic kernel), it *should* also apply to lower versions and/or other debian-based distributions (but not guaranteed...).
 
 - Make sure you are actually logged in as root (using sudo or sudo su will probably result in problems with PATH)
 ```
-$ sudo su -
+sudo su -
 ```
 - Take care of installing all prerequisits for using pipenv:
 Assuming your installation is up to date, if not consider doing:
 ```
-$ apt-get update && apt-get upgrade
+apt-get update && apt-get upgrade
 ```
 To install pipenv via the installer script you will need an existing python installation as well as the corresponding python distutils. Ubuntu 20.04.02 ships with Python 3.8.5 which will need the python3-distutils:
 ```
-$ apt install python3-distutils
+apt install python3-distutils
 ```
 Install git and packages needed for pyenv to build python:
 ```
-$ apt install git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+apt install git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 ```
 Install pyenv:
 ```
-$ curl https://pyenv.run | bash
+curl https://pyenv.run | bash
 ```
 Open the following file:
 ```
-$ vi /root/.profile
+vi /root/.profile
 ```
 And insert these lines at the beginning:
 ```
@@ -67,101 +59,87 @@ eval "$(pyenv init --path)"
 ```
 Restart the logon session and check if pyenv is available in your PATH:
 ```
-$ exit
-$ sudo su -
-$ pyenv --version
+exit
+sudo su -
+pyenv --version
 ```
 To install pipenv, make sure to change the last part of the following command to reference your python installation (e.g. python instead of python3 in case you might have aliased python3)
 ```
-$ curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python3
+curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python3
 ```
 To check if pipenv was installed successfully, run:
 ```
-$ pipenv --version
+pipenv --version
 ```
 Now all prerequisits are met and we can continue to install the firewall-bot.
 If you are not installing on a fresh system and maybe already have iptables rules in place, it may be a good idea to save those rules:
 ```
-$ iptables-save > /root/iptables-backup
-$ iptables-legacy-save > /root/iptables-backup-legacy
+iptables-save > /root/iptables-backup
+iptables-legacy-save > /root/iptables-backup-legacy
 ```
 You can later reapply them with:
 ```
-$ iptables-restore /root/iptables-backup
-$ iptables-restore /root/iptables-backup-legacy
+iptables-restore /root/iptables-backup
+iptables-restore /root/iptables-backup-legacy
 ```
 - Create a directory where you'd like to have the firewall-bot project, in this guide we will use /fwbot in the "home" directory of root (/root):
 ```
-$ mkdir /root/fwbot
+mkdir /root/fwbot
 ```
 - Move into your project directory, clone the firewall-bot repository and move into the repository directory:
 ```
-$ cd /root/fwbot
-$ git clone https://github.com/janekc/firewall-bot
-$ cd /root/fwbot/firewall-bot
+cd /root/fwbot
+git clone https://github.com/janekc/firewall-bot
+cd /root/fwbot/firewall-bot
 ```
 - Use pipenv to install the firewall-bot and its required packages and version of python:
 ```
-$ pipenv install
+pipenv install
 ```
 Answer 'Y' if you're asked to install CPython with Pyenv.
 - Activate your newly created python environment:
 ```
-$ pipenv shell
+pipenv shell
 ```
 - Move into your project directory, clone the ufw master repository, move into the repository directory and use pip to install ufw (you might be able to get by using a version of ufw that is already installed on your system or available via apt - we recommend using the most recent master):
 ```
-$ cd /root/fwbot
-$ git clone -b master https://git.launchpad.net/ufw
-$ cd /root/fwbot/ufw
-$ pip install .
+cd /root/fwbot
+git clone -b master https://git.launchpad.net/ufw
+cd /root/fwbot/ufw
+pip install .
 ```
 - Move back into your project directory:
 ```
-$ cd /root/fwbot
+cd /root/fwbot
 ```
 - Use pip to install deltachat from devpi:
 ```
-$ pip install --pre -i https://m.devpi.net/dc/master deltachat
+pip install --pre -i https://m.devpi.net/dc/master deltachat
 ```
 - Use pip to install deltabot:
 ```
-$ pip install deltabot
+pip install deltabot
 ```
 - Move into your firewall-bot repository directory:
 ```
-$ cd /root/fwbot/firewall-bot
+cd /root/fwbot/firewall-bot
 ```
 Now let's initialize the bot with an email address
 ```
-$ deltabot init <email address> <password>
+deltabot init <email address> <password>
 ```
 The bot should be ready to use by now, let's see if it works!
 ```
-$ deltabot serve
+deltabot serve
 ```
 If it does, you can add the firewall module
 ```
-$ deltabot add-module firewall-bot.py
-$ deltabot serve
+deltabot add-module firewall-bot.py
+deltabot serve
 ```
-Post-Installation (as root/sudo):  
-- Disable IPv6 in ufw:
-Open the following file:
-```
-$ vi /etc/default/ufw
-```
-Change the line:
-```
-IPV6=yes
-```
-to:
-```
-IPV6=no
-```
+Post-Installation (as root/sudo):
 Make sure that no matter how restrictive your firewall-settings may be, the firewall-bot will always be able to fetch emails:
-Insert the following lines into /etc/ufw/before.rules  
-This part is IMPORTANT - failing to ensure the bots communication can leave you locked out of your system!
+Insert the following lines into /etc/ufw/before.rules
 ```
 # FWBOT
 -A ufw-before-output -p tcp --dport 993 -j ACCEPT
@@ -173,22 +151,21 @@ Additionally, if you want to make sure you always have SSH access, add this line
 # SSHACCESS
 -A ufw-before-input -p tcp --dport $PORT -j ACCEPT
 ```
-Have the firewall-bot run as a system service:  
-Make sure that you scan the QR-code when running "deltabot serve", you won't have access to the correct display of the code when it is written to syslog (or your own logfile) instead of stdout!
+Have the firewall-bot run as a system service:
 - Move into your firewall-bot directory and activate the projects python environment:
 ```
-$ cd *yourprojectdirectory*/firewall-bot
-$ pipenv shell
+cd *yourprojectdirectory*/firewall-bot
+pipenv shell
 ```
 - Display the path to the deltabot installation:
 ```
-$ which deltabot
+which deltabot
 ```
 The output should look sth like this: /root/.local/share/virtualenvs/firewall-bot-DJhpAnUw/bin/deltabot.
 You will need this full path to put in your service file. Exit the python environment to continue.
 - Create a service file:
 ```
-$ vi /etc/systemd/system/fwbot.service
+vi /etc/systemd/system/fwbot.service
 ```
 - Insert the following into the service file:
 ```
@@ -206,14 +183,14 @@ WantedBy=multi-user.target
 ```
 - After every change to service files do:
 ```
-$ systemctl daemon-reload
+systemctl daemon-reload
 ```
 Now you can use systemctl start/stop/status/enable/disable/restart/... fwbot.service like any other service.
 At this point all "output" (stdout, stderr, print-statements) will be redirected by systemctl to syslog (/var/log/syslog).
 You may want to change this behaviour:
 - Open the syslog config
 ```
-$ vi /etc/rsyslog.d/50-default.conf
+vi /etc/rsyslog.d/50-default.conf
 ```
 - Insert the following into the config:
 ```
@@ -221,12 +198,12 @@ $ vi /etc/rsyslog.d/50-default.conf
 ```
 - Restart the rsyslog daemon:
 ```
-$ systemctl restart rsyslog
+systemctl restart rsyslog
 ```
 For the cherry on top, setup logrotation for fwbot-logging:
 - Create a logrotate file:
 ```
-$ vi /etc/logrotate.d/fwbot
+vi /etc/logrotate.d/fwbot
 ```
 - Insert the following into the logrotate file (daily zipping and max 5 logs - feel free to adapt this to your liking):
 ```
@@ -244,9 +221,9 @@ $ vi /etc/logrotate.d/fwbot
 ```
 - Run the rotation dry to make sure there are no errors:
 ```
-$ logrotate -d /etc/logrotate.d/fwbot
+logrotate -d /etc/logrotate.d/fwbot
 ```
 - Run the rotation once:
 ```
-$ logrotate --force /etc/logrotate.d/fwbot
+logrotate --force /etc/logrotate.d/fwbot
 ```
