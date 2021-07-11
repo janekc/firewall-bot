@@ -475,7 +475,7 @@ def service_set(command, replies):
 
 
 # >>> GUIDE
-gmd = ["append", "incoming", None, "any", "any", "both", "any", None]
+gmd = ["append", "incoming", None, "any", "any", "tcp/udp", "any", None]
 gmc = gmd[:]
 
 
@@ -527,7 +527,7 @@ def guide_0(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = f"Do you want to insert this rule at a specific position or append it at the end of all rules? (Default: append)\nRules are evaluated from top to bottom.\n\nAllowed values for *position*:  1  to  {fw()[1].get_rules_count(False)}"
+    txt = f"Do you want to insert this rule at a specific position or append it at the end of all rules?\n(Default: append)\nRules are evaluated from top to bottom!\n\nAllowed values for *position*:  1  to  {fw()[1].get_rules_count(False)}"
     guide_unreg()
     dbot.commands.register(name="/s", func=guide_1)
     dbot.commands.register(name="//", func=guide_0_pl)
@@ -571,7 +571,7 @@ def guide_1(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "Do you want this rule to target traffic directed towards your system (incoming) or traffic originating from your system (outgoing)? (Default: incoming)\n\nDepending on the current setting, use  /out  or  /d  to switch between these options."
+    txt = "Do you want this rule to target traffic directed towards your system (incoming) or traffic originating from your system (outgoing)?\n(Default: incoming)\n\nDepending on the current setting, use  /out  or  /d  to switch between these options."
     guide_unreg()
     dbot.commands.register(name="/s", func=guide_2)
     dbot.commands.register(name="/b", func=guide_0)
@@ -606,7 +606,7 @@ def guide_2(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "Which action would you like the rule to take for the targeted traffic?\nThis setting has no default value.\n\nAllowed values for *action*:\n・ allow\n  (traffic will be accepted)\n・ deny\n  (traffic will be discarded)\n・ reject\n  (traffic will be discarded and an error paket will be returned to the sender)"
+    txt = "Which action would you like the rule to take for the targeted traffic?\nThis setting has no default value.\n\nAllowed values for *action*:\n・ allow\n    (traffic will be accepted)\n・ deny\n    (traffic will be discarded)\n・ reject\n    (traffic will be discarded and an error paket will be returned to the sender)"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_1)
     dbot.commands.register(name="//", func=guide_2_pl)
@@ -639,7 +639,7 @@ def guide_3(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "***choose source"
+    txt = "Do you want this rule to filter traffic originating from a specific source?\n(Default: any)\n\nAllowed values for *source*:\n・ host (e.g. 8.8.8.8)\n・ network (e.g. 8.8.8.8/24)"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_2)
     dbot.commands.register(name="/s", func=guide_4)
@@ -681,7 +681,7 @@ def guide_4(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "***choose destination"
+    txt = "Do you want this rule to filter traffic directed towards a specific destination?\n(Default: any)\n\nAllowed values for *destination*:\n・ host (e.g. 8.8.8.8)\n・ network (e.g. 8.8.8.8/24)"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_3)
     dbot.commands.register(name="/s", func=guide_5)
@@ -723,7 +723,7 @@ def guide_5(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "***choose protocol"
+    txt = "Would you like to restrict this rules filtering to a specific protocol?\n(Default: tcp and udp)\n\nAllowed values for *protocol*:\n・ tcp\n・ udp\n・ esp\n・ gre\n・ ah\n・ igmp\n・ ipv6\n\nWith the exception of default there are some restrictions:\n・ tcp and udp need specification of port(range)s.\n・ All other protocols do not allow port specification but need at least one of source/destination specified.\n(Please consult your favourite search engine to get information about these protocols)."
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_4)
     dbot.commands.register(name="/s", func=guide_6)
@@ -762,7 +762,7 @@ def guide_5_pl(command, replies):
 
 
 def guide_5_other(replies):
-    txt = "***❗️must choose source or destination, use /src or /dst or go back to change protocol"
+    txt = f"For protocol {gmc[5]} you must choose source or destination!\nUse  /src  or  /dst  to jump back to those steps or  /b  to go back and change protocol."
     dbot.commands.register(name="/b", func=guide_5)
     dbot.commands.register(name="/src", func=guide_3)
     dbot.commands.register(name="/dst", func=guide_4)
@@ -787,9 +787,7 @@ def guide_6(command, replies):
 
 
 def guide_6_one(replies):
-    txt = (
-        "***choose port, multiple ports, portrange, multiple portranges or combination"
-    )
+    txt = f"For protocol {gmc[5]} you must choose port(range)s!\n\nAllowed values for *port(range)s*:\n・ a single port (e.g 80)\n・ multiple ports (e.g. 80,443)\n・ a portrange (e.g. 22:44)\n・ multiple portranges (e.g 22:44,55:77)\n・ any combination (e.g 80,55:77,22:44,443)"
     dbot.commands.register(name="/b", func=guide_5)
     dbot.commands.register(name="//", func=guide_6_one_pl)
     s = ""
@@ -853,7 +851,7 @@ def guide_6_one_pl(command, replies):
 
 
 def guide_6_both(replies):
-    txt = "***choose exactly one port or default (default: any)"
+    txt = f"For protocol {gmc[5]} you may choose a port.\n(Default: any)\n\nAllowed values for *port*:\n・ a single port (e.g 80)"
     dbot.commands.register(name="/b", func=guide_5)
     dbot.commands.register(name="//", func=guide_6_both_pl)
     s = ""
@@ -897,7 +895,7 @@ def guide_6_both_pl(command, replies):
 
 
 def guide_6_other(replies):
-    txt = f"***cannot specify port for protocol {gmc[5]}"
+    txt = f"No port specification is allowed for protocol {gmc[5]}!"
     dbot.commands.register(name="/b", func=guide_5)
     s = ""
     d = ""
@@ -907,7 +905,7 @@ def guide_6_other(replies):
     else:
         dbot.commands.register(name="/d", func=guide_6_other_def)
         d = "\n🔺 /d  (default)"
-        txt = f"{txt}\nuse /d to set ports to default (any) or /b to choose a different protocol"
+        txt = f"{txt}\n\nPlease use  /d  to set ports to default (any) or  /b  to go back and choose a different protocol"
     replies.add(
         f"🌐 GUIDE (7/8)\n{txt}\n\n{guide_r(6)}\n{d}\n🔺 /b  (back){s}\n🔺 /q  (quit)"
     )
@@ -925,7 +923,7 @@ def guide_7(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "Would you like to add a comment to this rule?\n\nThis setting is optional (Default: None), you may specify a comment using  // whateveryoulikeincludingspacesandsuch"
+    txt = "Would you like to add a comment to this rule?\nThis setting is optional (Default: None)\n\nYou may specify a comment using  // whateveryoulikeincludingspacesandsuch"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_6)
     dbot.commands.register(name="/s", func=guide_finish)
@@ -966,7 +964,7 @@ def guide_finish(command, replies):
     x = "add"
     if gmc[0] != gmd[0]:
         x = "insert"
-    txt = f"Rule building is done.\nPlease check if the rule below matches your expectation, if so you may use /f  to {x} this rule and finish this guide."
+    txt = f"Rule building is done.\nPlease check if the rule below matches your expectation, if so you may use  /f  to {x} this rule and finish this guide."
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_6)
     dbot.commands.register(name="/f", func=guide_exec)
@@ -1053,7 +1051,6 @@ def scan(command, replies):
 # NOPE: f-string alignment -> no monospaced font in chats
 # NOPE: find better ufw man and set link -> no better manpage available
 
-# TODO: descriptive texts for guided mode steps incl. possible values
 # TODO: scan
 # TODO: add ufw and python version to /info, add nmap info (installed, version)
 # TODO: code optimization for service_set(), service() and others
