@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.8.0
+-----
+
+- running well and pretty to look at
+- some txts still have to be added
+
+
 0.7.0
 -----
 

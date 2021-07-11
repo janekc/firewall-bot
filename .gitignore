@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# atom on macos
+.remote-sync.json
+.DS_Store
