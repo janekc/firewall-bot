@@ -223,12 +223,12 @@ def rules(command, replies):
     dbot.commands.register(name="//", func=rules_set)
     y = "\n\n"
     z = ""
+    if len(x) > 0:
+        dbot.commands.register(name="/reset", func=rules_set)
+        y = "\n🔺 /reset\nDelete all rules shown above.\n"
     if len(x) > 1:
         dbot.commands.register(name="/move", func=rules_set)
         z = "\n🔺 /move  *rulenumber*  *position*\nMoves an existing rule to a specific position. (experimental)\n"
-    elif len(x) > 0:
-        dbot.commands.register(name="/reset", func=rules_set)
-        y = "\n🔺 /reset\nDelete all rules shown above.\n"
     x = "\n".join(x)
     replies.add(
         f"🌐 RULES\n{x}\n\n🔺 //  *ufw-command*\nSpecify a valid ufw-command to add or insert allow/deny/reject/limit-rules or to delete rules.\n{y}{z}\n📖 rule syntax: https://is.gd/18ivdz"
@@ -242,8 +242,9 @@ def rules_set(command, replies):
         return
     opt = ("allow", "deny", "reject", "limit", "delete", "insert")
     clear_cmd()
+    p = ufwp.UFWParser()
     for c in opt:
-        ufwp.UFWParser().register_command(ufwp.UFWCommandRule(c))
+        p.register_command(ufwp.UFWCommandRule(c))
     cmd = command.message.text[1:].split()[0]
     if "comment" in command.payload:
         plx = re.split("comment", command.payload)
@@ -255,7 +256,7 @@ def rules_set(command, replies):
     if cmd == "reset":
         while fw()[1].get_rules_count(False) > 0:
             try:
-                pr = ufwp.UFWParser().parse_command(["delete", "1"])
+                pr = p.parse_command(["delete", "1"])
                 fw()[0].do_action(
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
@@ -277,9 +278,8 @@ def rules_set(command, replies):
                 rle = ufwp.UFWCommandRule.get_command(
                     fw()[1].get_rules()[y - 1]
                 ).split()
-                print(rle)
                 try:
-                    pr = ufwp.UFWParser().parse_command(["delete"] + rle)
+                    pr = p.parse_command(["delete"] + rle)
                     fw()[0].do_action(
                         pr.action,
                         pr.data.get("rule", ""),
@@ -292,7 +292,7 @@ def rules_set(command, replies):
                 if y < z:
                     w = 1
                 try:
-                    pr = ufwp.UFWParser().parse_command(["insert"] + [str(z - w)] + rle)
+                    pr = p.parse_command(["insert"] + [str(z - w)] + rle)
                     fw()[0].do_action(
                         pr.action,
                         pr.data.get("rule", ""),
@@ -312,8 +312,7 @@ def rules_set(command, replies):
                 pl.append("comment")
                 pl.append(" ".join(cmt))
             try:
-                pr = ufwp.UFWParser().parse_command(pl)
-                print(pr)
+                pr = p.parse_command(pl)
                 fw()[0].do_action(
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
@@ -403,15 +402,20 @@ def service(command, replies):
             f"🔷 ID: {i}\n\t🔹 Service:  '{c[3]}'\n\t🔹 Protocol:  '{c[0]}'\n\t🔹 Port:  '{c[2]}'\n\t🔹 Address:  '{z}'\n\t🔹 Rules:  {y}"
         )
         i += 1
-    dbot.commands.register(name="//", func=service_set)
-    y = "\n\n"
-    if rl:
-        dbot.commands.register(name="/del", func=service_set)
-        y = "\n🔺 /del  *rulenumber* \nDelete a corresponding rule.\n"
-    x = "\n".join(x)
-    replies.add(
-        f"🌐 SERVICES\n{x}\n\n🔺 //  *action*  *ID*\nAutomagically create a corresponding rule with action allow, deny or reject. This rule will match the service as closely as possible.\n{y}\nDepending on your default profile or before rules it might not be necessary to have explicit rules for every listener."
-    )
+    if x:
+        dbot.commands.register(name="//", func=service_set)
+        y = "\n\n"
+        if rl:
+            dbot.commands.register(name="/del", func=service_set)
+            y = "\n🔺 /del  *rulenumber* \nDelete a corresponding rule.\n"
+        x = "\n".join(x)
+        replies.add(
+            f"🌐 SERVICES\n{x}\n\n🔺 //  *action*  *ID*\nAutomagically create a corresponding rule with action allow, deny or reject. This rule will match the service as closely as possible.\n{y}\nDepending on your default profile or before rules it might not be necessary to have explicit rules for every listener."
+        )
+    else:
+        replies.add(
+            f"🌐 SERVICES\n\nNo listening services found."
+        )
 
 
 def service_set(command, replies):
@@ -419,6 +423,7 @@ def service_set(command, replies):
     if not verify(command.message):
         return
     clear_cmd()
+    p = ufwp.UFWParser()
     cmd = command.message.text[1:].split()[0]
     pl = [c for c in command.payload.split() if c.strip()]
     if cmd == "del":
@@ -429,9 +434,9 @@ def service_set(command, replies):
         elif int(pl[0]) not in dels:
             replies.add("⚠️ argument must be valid rulenumber")
         else:
-            ufwp.UFWParser().register_command(ufwp.UFWCommandRule("delete"))
+            p.register_command(ufwp.UFWCommandRule("delete"))
             try:
-                pr = ufwp.UFWParser().parse_command(["delete", pl[0]])
+                pr = p.parse_command(["delete", pl[0]])
                 fw()[0].do_action(
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
@@ -444,10 +449,10 @@ def service_set(command, replies):
             replies.add("⚠️ 1st argument must be allow, deny or reject")
         elif not pl[1].isnumeric():
             replies.add("⚠️ 2nd argument must be numeric")
-        elif not int(pl[1]) <= len(serv):
+        elif not 0 < int(pl[1]) < len(serv):
             replies.add("⚠️ 2nd argument must be valid ID")
         else:
-            ufwp.UFWParser().register_command(ufwp.UFWCommandRule(pl[0]))
+            p.register_command(ufwp.UFWCommandRule(pl[0]))
             ppll = [pl[0], f"{serv[int(pl[1])][2]}/{serv[int(pl[1])][0]}"]
             if serv[int(pl[1])][1] != "*":
                 ppll = [
@@ -462,7 +467,7 @@ def service_set(command, replies):
             ppll.append("comment")
             ppll.append(f"auto for {serv[int(pl[1])][3]}")
             try:
-                pr = ufwp.UFWParser().parse_command(ppll)
+                pr = p.parse_command(ppll)
                 fw()[0].do_action(
                     pr.action,
                     pr.data.get("rule", ""),
@@ -510,7 +515,7 @@ def guide(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "This mode will guide you through the creation of a firewall rule. Below you will find a list of rules as well as all possible commands.\nOnce started, you will be presented with the new rule and its default values and an indicator for which value is currently being edited.\nIf available, you may choose /s (skip) to advance to the next step (maintaining the current value or default).\n To (re-)edit a (skipped) setting, use /b (back) to go to the previous step.\nTo set a value to its default, use /d (default).\nTo exit this mode at any time, use /q (quit) - all settings done so far will be discarded.\n\nEach step will explain what is being edited as well as possible commands and arguments (in addition to /s /b /q)."
+    txt = "This mode will guide you through the creation of a firewall rule. Below you will find a list of rules as well as all possible commands.\nOnce started, you will be presented with the new rule and its default values and an indicator for which value is currently being edited.\nIf available, you may choose  /s  (skip)  to advance to the next step (maintaining the current value or default).\nIf available, you may choose  /d  (default)  to set a value to its default and advance to the next step.\n To (re-)edit a (skipped) setting, use  /b  (back)  to go to the previous step.\nTo exit this mode at any time, use  /q  (quit)  - all settings done so far will be discarded.\n\nEach step will explain what is being edited as well as possible commands and arguments.\n(in addition to  /d  /b  /s  /q)."
     clear_cmd()
     menu_off()
     gmc = gmd[:]
@@ -559,7 +564,7 @@ def guide_0_pl(command, replies):
     elif not pl[0].isnumeric():
         replies.add("⚠️ argument must be numeric")
         guide_0(command, replies)
-    elif int(pl[0]) > fw()[1].get_rules_count(False):
+    elif not 0 < int(pl[0]) <= fw()[1].get_rules_count(False):
         replies.add("⚠️ argument must be valid position")
         guide_0(command, replies)
     else:
@@ -576,7 +581,7 @@ def guide_1(command, replies):
     dbot.commands.register(name="/s", func=guide_2)
     dbot.commands.register(name="/b", func=guide_0)
     if gmc[1] == gmd[1]:
-        dbot.commands.register(name="/out", func=guide_1_pl)
+        dbot.commands.register(name="/out", func=guide_1_out)
         x = "\n🔺 /out"
     else:
         dbot.commands.register(name="/d", func=guide_1_def)
@@ -594,7 +599,7 @@ def guide_1_def(command, replies):
     guide_2(command, replies)
 
 
-def guide_1_pl(command, replies):
+def guide_1_out(command, replies):
     """."""
     if not verify(command.message):
         return
@@ -639,7 +644,7 @@ def guide_3(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = "Do you want this rule to filter traffic originating from a specific source?\n(Default: any)\n\nAllowed values for *source*:\n・ host (e.g. 8.8.8.8)\n・ network (e.g. 8.8.8.8/24)"
+    txt = "Do you want this rule to filter traffic originating from a specific source?\n(Default: any)\n\nAllowed values for *source*:\n・ host  (e.g. 8.8.8.8)\n・ network  (e.g. 8.8.8.8/24)"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_2)
     dbot.commands.register(name="/s", func=guide_4)
@@ -978,6 +983,7 @@ def guide_exec(command, replies):
     if not verify(command.message):
         return
     clear_cmd()
+    p = ufwp.UFWParser()
     for c in ["b", "f", "q"]:
         with suppress(Exception):
             dbot.commands.unregister(name=f"/{c}")
@@ -985,7 +991,7 @@ def guide_exec(command, replies):
     if gmc[0] != gmd[0]:
         x.append("insert")
         x.append(gmc[0])
-        ufwp.UFWParser().register_command(ufwp.UFWCommandRule("insert"))
+        p.register_command(ufwp.UFWCommandRule("insert"))
     x.append(gmc[2])
     if gmc[1] != gmd[1]:
         x.append("out")
@@ -1008,12 +1014,12 @@ def guide_exec(command, replies):
             x.append(f"{gmc[6]}/{gmc[5]}")
         elif gmc[5] == gmd[5] and gmc[6] != gmd[6]:
             x.append(gmd[6])
-    ufwp.UFWParser().register_command(ufwp.UFWCommandRule(gmc[2]))
+    p.register_command(ufwp.UFWCommandRule(gmc[2]))
     if gmc[7] != gmd[7]:
         x.append("comment")
         x.append(gmc[7])
     try:
-        pr = ufwp.UFWParser().parse_command(x)
+        pr = p.parse_command(x)
         fw()[0].do_action(
             pr.action,
             pr.data.get("rule", ""),
