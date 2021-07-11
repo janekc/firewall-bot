@@ -261,7 +261,9 @@ def rules_set(command, replies):
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
             except Exception as xcp:
-                replies.add(f"⛔️ ufw error: {xcp}")
+                replies.add(f"⛔️ ufw exception:\n{xcp}")
+            except:
+                replies.add(f"📛 ufw error")
     elif cmd == "move":
         if len(pl) != 2:
             replies.add("⚠️ expects two arguments")
@@ -287,7 +289,9 @@ def rules_set(command, replies):
                         True,
                     )
                 except Exception as xcp:
-                    replies.add(f"⛔️ ufw error: {xcp}")
+                    replies.add(f"⛔️ ufw exception:\n{xcp}")
+                except:
+                    replies.add(f"📛 ufw error")
                 w = 0
                 if y < z:
                     w = 1
@@ -300,7 +304,9 @@ def rules_set(command, replies):
                         True,
                     )
                 except Exception as xcp:
-                    replies.add(f"⛔️ ufw error: {xcp}")
+                    replies.add(f"⛔️ ufw exception:\n{xcp}")
+                except:
+                    replies.add(f"📛 ufw error")
     else:
         if len(pl) < 2:
             replies.add("⚠️ expects arguments")
@@ -317,7 +323,9 @@ def rules_set(command, replies):
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
             except Exception as xcp:
-                replies.add(f"⛔️ ufw error: {xcp}")
+                replies.add(f"⛔️ ufw exception:\n{xcp}")
+            except:
+                replies.add(f"📛 ufw error")
     rules(command, replies)
 
 
@@ -439,7 +447,9 @@ def service_set(command, replies):
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
             except Exception as xcp:
-                replies.add(f"⛔️ ufw error: {xcp}")
+                replies.add(f"⛔️ ufw exception:\n{xcp}")
+            except:
+                replies.add(f"📛 ufw error")
     else:
         if len(pl) != 2:
             replies.add("⚠️ expects two arguments")
@@ -473,7 +483,9 @@ def service_set(command, replies):
                     True,
                 )
             except Exception as xcp:
-                replies.add(f"⛔️ ufw error: {xcp}")
+                replies.add(f"⛔️ ufw exception:\n{xcp}")
+            except:
+                replies.add(f"📛 ufw error")
     service(command, replies)
 
 
@@ -1025,7 +1037,11 @@ def guide_exec(command, replies):
             True,
         )
     except Exception as xcp:
-        replies.add(f"⛔️ ufw error: {xcp}")
+        replies.add(f"⛔️ ufw exception:\n{xcp}")
+        guide_finish(command, replies)
+        return
+    except:
+        replies.add(f"📛 ufw error")
         guide_finish(command, replies)
         return
     x = []
