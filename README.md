@@ -1,73 +1,73 @@
 # firewall-bot
-A simple chatbot designed to configure your firewall using ufw *Uncomplicated Firewall* to configure iptables/nftables.
+A simple chatbot designed to configure your firewall using ufw *Uncomplicated Firewall* which configures the systems iptables/nftables.
 
 ## step-by-step guide to run your first bot
 We will use [deltabot](https://github.com/deltachat-bot/deltabot) as a chatbot framework.
 The chat betweent client and chatbot is e2e encrypted with [autocrypt](https://autocrypt.org/).
-To use the bot you will need an email address for the bot and a [Deltachat client](https://get.delta.chat/)
+To use the bot you will need an email address for the bot and a [Deltachat client](https://get.delta.chat/).
 
 Caveat 1:
 If the email address you plan on using for your bot belongs to a domain that does not host a mail server under that domain (e.g. botname@yourdomain but imap/smtp.yourhostersdomain), you need to make sure that the deltabot init routine can find a suitable autoconfig file.
 Additionally this file has to be served using TLS encryption since the init routine will not use plain http to access the file.
-You can use the supplied config-v1.1.xml file and adapt it to suit the domain your email address belongs to and then serve it at https://yourdomain/mail/config-v1.1.xml
+You can use the supplied config-v1.1.xml file and adapt it to suit the domain your email address belongs to and serve it at https://yourdomain/mail/config-v1.1.xml
 The init routine will then pick up the needed information automatically and set itself up for that account.
-Of course there are different ways to accomplish this (autoconfig/autodiscover/.well-known etc.) but deltabot init will try pretty much every possible way to setup the given email address
+Of course there are different ways to accomplish this (autoconfig/autodiscover/.well-known etc.) but deltabot init will try pretty much every possible way to setup the given email address.
 
 Caveat 2:
 For using ufw, you have be root while installing and the bot (started manually or as a service) has to run as root.
 
 INSTALLATION:
 There are (at least) 3 ways to your own firewall-bot:
-1. You use the python installation that is included in your OS (must be at least version 3.9) and install all packages listed in the Pipfile onto that. This approach is not recommended.
-2. You create a virtual environment (using venv, which is included in python version 3.8+ or any other means of creating virtual python environments) and install the required packages into the that virtual environment.
+1. You use the python installation that is included in your OS (must be at least version 3.8) and install all packages listed in the Pipfile onto that. This approach is not recommended.
+2. You create a virtual environment (using venv, which is included in python version 3.8+ or any other means of creating virtual python environments) and install the required packages into that virtual environment.
 3. You follow this guide, which will make use of pipenv (and with it pyenv) to not only install the required python version (independent from your system python installation) into an environment solely used for the firewall-bot, but also install every required package.
 
 In any case, please take a look at the last steps of the installation - even using pipenv you will have to manually install deltachat and subsequently deltabot.
 
 The following step-by-step guide has been tested on a fresh installation of Ubuntu 20.04.2 LTS (generic kernel), it *should* also apply to lower versions and/or other debian-based distributions (but not guaranteed...).
 
-- Make sure you are actually logged in as root (using sudo or sudo su will probably result in problems with PATH)
+- Make sure you are actually logged in as root (using sudo or sudo su will probably result in problems with PATH).
 ```
 sudo su -
 ```
 - Take care of installing all prerequisits for using pipenv:
-Assuming your installation is up to date, if not consider doing:
+assuming your installation is up to date, if not consider doing:
 ```
 apt-get update && apt-get upgrade
 ```
-To install pipenv via the installer script you will need an existing python installation as well as the corresponding python distutils. Ubuntu 20.04.02 ships with Python 3.8.5 which will need the python3-distutils:
+- To install pipenv via the installer script you will need an existing python installation as well as the corresponding python distutils. Ubuntu 20.04.02 ships with Python 3.8.5 which will need the python3-distutils:
 ```
 apt install python3-distutils
 ```
-Install git and packages needed for pyenv to build python:
+- Install git and packages needed for pyenv to build python:
 ```
 apt install git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 ```
-Install pyenv:
+- Install pyenv:
 ```
 curl https://pyenv.run | bash
 ```
-Open the following file:
+- Open the following file:
 ```
 vi /root/.profile
 ```
-And insert these lines at the beginning:
+- And insert these lines at the beginning:
 ```
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init --path)"
 ```
-Restart the logon session and check if pyenv is available in your PATH:
+- Restart the logon session and check if pyenv is available in your PATH:
 ```
 exit
 sudo su -
 pyenv --version
 ```
-To install pipenv, make sure to change the last part of the following command to reference your python installation (e.g. python instead of python3 in case you might have aliased python3)
+- To install pipenv, make sure to change the last part of the following command to reference your python installation (e.g. python instead of python3 in case you might have aliased python3):
 ```
 curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python3
 ```
-To check if pipenv was installed successfully, run:
+- To check if pipenv was installed successfully, run:
 ```
 pipenv --version
 ```
@@ -96,7 +96,7 @@ cd /root/fwbot/firewall-bot
 ```
 pipenv install
 ```
-Answer 'Y' if you're asked to install CPython with Pyenv.
+(Answer 'Y' if you're asked to install CPython with Pyenv).
 - Activate your newly created python environment:
 ```
 pipenv shell
