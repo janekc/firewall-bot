@@ -260,8 +260,8 @@ def rules_set(command, replies):
                 fw()[0].do_action(
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
-            except:
-                replies.add("⛔️ ufw error (delete)")
+            except Exception as xcp:
+                replies.add(f"⛔️ ufw error: {xcp}")
     elif cmd == "move":
         if len(pl) != 2:
             replies.add("⚠️ expects two arguments")
@@ -286,8 +286,8 @@ def rules_set(command, replies):
                         pr.data.get("iptype", ""),
                         True,
                     )
-                except:
-                    replies.add("⛔️ ufw error (delete)")
+                except Exception as xcp:
+                    replies.add(f"⛔️ ufw error: {xcp}")
                 w = 0
                 if y < z:
                     w = 1
@@ -299,8 +299,8 @@ def rules_set(command, replies):
                         pr.data.get("iptype", ""),
                         True,
                     )
-                except:
-                    replies.add("⛔️ ufw error (insert)")
+                except Exception as xcp:
+                    replies.add(f"⛔️ ufw error: {xcp}")
     else:
         if len(pl) < 2:
             replies.add("⚠️ expects arguments")
@@ -316,8 +316,8 @@ def rules_set(command, replies):
                 fw()[0].do_action(
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
-            except:
-                replies.add(f"⛔️ ufw error ({pl[0]})")
+            except Exception as xcp:
+                replies.add(f"⛔️ ufw error: {xcp}")
     rules(command, replies)
 
 
@@ -413,9 +413,7 @@ def service(command, replies):
             f"🌐 SERVICES\n{x}\n\n🔺 //  *action*  *ID*\nAutomagically create a corresponding rule with action allow, deny or reject. This rule will match the service as closely as possible.\n{y}\nDepending on your default profile or before rules it might not be necessary to have explicit rules for every listener."
         )
     else:
-        replies.add(
-            f"🌐 SERVICES\n\nNo listening services found."
-        )
+        replies.add(f"🌐 SERVICES\n\nNo listening services found.")
 
 
 def service_set(command, replies):
@@ -440,8 +438,8 @@ def service_set(command, replies):
                 fw()[0].do_action(
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
-            except:
-                replies.add("⛔️ ufw error (delete)")
+            except Exception as xcp:
+                replies.add(f"⛔️ ufw error: {xcp}")
     else:
         if len(pl) != 2:
             replies.add("⚠️ expects two arguments")
@@ -474,8 +472,8 @@ def service_set(command, replies):
                     pr.data.get("iptype", ""),
                     True,
                 )
-            except:
-                replies.add(f"⛔️ ufw error ({pl[0]})")
+            except Exception as xcp:
+                replies.add(f"⛔️ ufw error: {xcp}")
     service(command, replies)
 
 
@@ -1026,8 +1024,8 @@ def guide_exec(command, replies):
             pr.data.get("iptype", ""),
             True,
         )
-    except:
-        replies.add(f"⛔️ ufw error ({x[0]})")
+    except Exception as xcp:
+        replies.add(f"⛔️ ufw error: {xcp}")
         guide_finish(command, replies)
         return
     x = []
