@@ -56,6 +56,7 @@ def deltabot_start(bot: DeltaBot, chat=Chat):
 
 
 # >>> UTILITIES
+alert = [""]
 hlp = {
     "info": "Shows system info.",
     "status": "Get and set firewall status.",
@@ -220,23 +221,24 @@ def rules(command, replies):
     x = []
     for c in fw()[1].get_rules():
         x.append(f"🔹 {len(x) + 1}:  '{ufwp.UFWCommandRule.get_command(c)}'")
-    dbot.commands.register(name="//", func=rules_set)
-    y = "\n\n"
-    z = ""
+    dbot.commands.register(name="//", func=rules_pl)
+    y = ["\n\n", "", ""]
     if len(x) > 0:
-        dbot.commands.register(name="/reset", func=rules_set)
-        y = "\n🔺 /reset\nDelete all rules shown above.\n"
+        dbot.commands.register(name="/del", func=rules_del)
+        y[2] = "\n🔺 /del  *rulenumber*\nDelete a rule.\n"
     if len(x) > 1:
-        dbot.commands.register(name="/move", func=rules_set)
-        z = "\n🔺 /move  *rulenumber*  *position*\nMoves an existing rule to a specific position. (experimental)\n"
+        dbot.commands.register(name="/reset", func=rules_rst)
+        y[0] = "\n🔺 /reset\nDelete all rules shown above.\n"
+        dbot.commands.register(name="/move", func=rules_mv)
+        y[1] = "\n🔺 /move  *rulenumber*  *position*\nMoves an existing rule to a specific position. (experimental)\n"
     x = "\n".join(x)
     replies.add(
-        f"🌐 RULES\n{x}\n\n🔺 //  *ufw-command*\nSpecify a valid ufw-command to add or insert allow/deny/reject/limit-rules or to delete rules.\n{y}{z}\n📖 rule syntax: https://is.gd/18ivdz"
+        f"🌐 RULES\n{x}\n\n🔺 //  *ufw-command*\nSpecify a valid ufw-command to add or insert allow/deny/reject/limit-rules or to delete rules.\n{y[2]}{y[0]}{y[1]}\n📖 rule syntax: https://is.gd/18ivdz"
     )
 
 
-# move muss überarbeitet werden, ggf. statt position angeben, ob vor oder hinter einer bestimmten rule
-def rules_set(command, replies):
+# maybe add check for proto any and port any and remove them as they will raise an ufw ERROR because of a long time unfixed bug
+def rules_pl(command, replies):
     """."""
     if not verify(command.message):
         return
@@ -245,7 +247,6 @@ def rules_set(command, replies):
     p = ufwp.UFWParser()
     for c in opt:
         p.register_command(ufwp.UFWCommandRule(c))
-    cmd = command.message.text[1:].split()[0]
     if "comment" in command.payload:
         plx = re.split("comment", command.payload)
         pl = [c for c in plx[0].split() if c.strip()]
@@ -253,45 +254,105 @@ def rules_set(command, replies):
     else:
         pl = [c for c in command.payload.split() if c.strip()]
         cmt = []
-    if cmd == "reset":
-        while fw()[1].get_rules_count(False) > 0:
+    if len(pl) < 2:
+        replies.add("⚠️ expects arguments")
+    elif pl[0] not in opt:
+        replies.add("⚠️ invalid *action*")
+    # add elif for insert but invalid action - length of pl has to be checked
+    else:
+        if cmt:
+            pl.append("comment")
+            pl.append(" ".join(cmt))
+        try:
+            pr = p.parse_command(pl)
+            fw()[0].do_action(
+                pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
+            )
+        except Exception as xcp:
+            replies.add(f"⛔️ ufw exception:\n{xcp}")
+        except:
+            replies.add(f"📛 ufw error")
+    rules(command, replies)
+
+
+def rules_del(command, replies):
+    """."""
+    if not verify(command.message):
+        return
+    clear_cmd()
+    p = ufwp.UFWParser()
+    p.register_command(ufwp.UFWCommandRule("delete"))
+    while fw()[1].get_rules_count(False) > 0:
+        try:
+            pr = p.parse_command(["delete", "1"])
+            fw()[0].do_action(
+                pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
+            )
+        except Exception as xcp:
+            replies.add(f"⛔️ ufw exception:\n{xcp}")
+        except:
+            replies.add(f"📛 ufw error")
+    rules(command, replies)
+
+
+def rules_rst(command, replies):
+    """."""
+    if not verify(command.message):
+        return
+    clear_cmd()
+    p = ufwp.UFWParser()
+    p.register_command(ufwp.UFWCommandRule("delete"))
+    while fw()[1].get_rules_count(False) > 0:
+        try:
+            pr = p.parse_command(["delete", "1"])
+            fw()[0].do_action(
+                pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
+            )
+        except Exception as xcp:
+            replies.add(f"⛔️ ufw exception:\n{xcp}")
+        except:
+            replies.add(f"📛 ufw error")
+    rules(command, replies)
+
+
+# move muss überarbeitet werden, ggf. statt position angeben, ob vor oder hinter einer bestimmten rule
+def rules_mv(command, replies):
+    """."""
+    if not verify(command.message):
+        return
+    clear_cmd()
+    p = ufwp.UFWParser()
+    for c in ("delete", "insert"):
+        p.register_command(ufwp.UFWCommandRule(c))
+    pl = [c for c in command.payload.split() if c.strip()]
+    if len(pl) != 2:
+        replies.add("⚠️ expects two arguments")
+    elif not all([c.isnumeric() for c in pl]):
+        replies.add("⚠️ arguments must be numeric")
+    else:
+        x = fw()[1].get_rules_count(False)
+        y = int(pl[0])
+        z = int(pl[1])
+        if not (y != z and 0 < y <= x and 0 < z <= x):
+            # could be more elaborate
+            replies.add("⚠️ invalid argument(s)")
+        else:
+            rle = ufwp.UFWCommandRule.get_command(
+                fw()[1].get_rules()[y - 1]
+            ).split()
             try:
-                pr = p.parse_command(["delete", "1"])
+                pr = p.parse_command(["delete"] + rle)
                 fw()[0].do_action(
-                    pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
+                    pr.action,
+                    pr.data.get("rule", ""),
+                    pr.data.get("iptype", ""),
+                    True,
                 )
             except Exception as xcp:
                 replies.add(f"⛔️ ufw exception:\n{xcp}")
             except:
                 replies.add(f"📛 ufw error")
-    elif cmd == "move":
-        if len(pl) != 2:
-            replies.add("⚠️ expects two arguments")
-        elif not all([c.isnumeric() for c in pl]):
-            replies.add("⚠️ arguments must be numeric")
-        else:
-            x = fw()[1].get_rules_count(False)
-            y = int(pl[0])
-            z = int(pl[1])
-            if not (y != z and 0 < y <= x and 0 < z <= x):
-                # could be more elaborate
-                replies.add("⚠️ invalid argument(s)")
             else:
-                rle = ufwp.UFWCommandRule.get_command(
-                    fw()[1].get_rules()[y - 1]
-                ).split()
-                try:
-                    pr = p.parse_command(["delete"] + rle)
-                    fw()[0].do_action(
-                        pr.action,
-                        pr.data.get("rule", ""),
-                        pr.data.get("iptype", ""),
-                        True,
-                    )
-                except Exception as xcp:
-                    replies.add(f"⛔️ ufw exception:\n{xcp}")
-                except:
-                    replies.add(f"📛 ufw error")
                 w = 0
                 if y < z:
                     w = 1
@@ -307,25 +368,6 @@ def rules_set(command, replies):
                     replies.add(f"⛔️ ufw exception:\n{xcp}")
                 except:
                     replies.add(f"📛 ufw error")
-    else:
-        if len(pl) < 2:
-            replies.add("⚠️ expects arguments")
-        elif pl[0] not in opt:
-            replies.add("⚠️ invalid *action*")
-        # add elif for insert but invalid action - length of pl has to be checked
-        else:
-            if cmt:
-                pl.append("comment")
-                pl.append(" ".join(cmt))
-            try:
-                pr = p.parse_command(pl)
-                fw()[0].do_action(
-                    pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
-                )
-            except Exception as xcp:
-                replies.add(f"⛔️ ufw exception:\n{xcp}")
-            except:
-                replies.add(f"📛 ufw error")
     rules(command, replies)
 
 
@@ -542,7 +584,10 @@ def guide_0(command, replies):
     """."""
     if not verify(command.message):
         return
-    txt = f"Do you want to insert this rule at a specific position or append it at the end of all rules?\n(Default: append)\nRules are evaluated from top to bottom!\n\nAllowed values for *position*:  1  to  {fw()[1].get_rules_count(False)}"
+    x = "1"
+    if fw()[1].get_rules_count(False) != 0:
+        x = f"1  to  {fw()[1].get_rules_count(False)}"
+    txt = f"Do you want to insert this rule at a specific position or append it at the end of all rules?\n(Default: append)\nRules are evaluated from top to bottom!\n\nAllowed values for *position*:  {x}"
     guide_unreg()
     dbot.commands.register(name="/s", func=guide_1)
     dbot.commands.register(name="//", func=guide_0_pl)
@@ -1011,23 +1056,16 @@ def guide_exec(command, replies):
     if gmc[4] != gmd[4]:
         x.append("to")
         x.append(gmc[4])
-    if "from" in x or "to" in x:
+    if gmc[5] != gmd[5]:
         x.append("proto")
-        if gmc[5] == "both":
-            x.append("any")
-        else:
-            x.append(gmc[5])
+        x.append(gmc[5])
+    if gmc[6] != gmd[6]:
         x.append("port")
         x.append(gmc[6])
-    else:
-        if gmc[5] != gmd[5] and gmc[6] != gmd[6]:
-            x.append(f"{gmc[6]}/{gmc[5]}")
-        elif gmc[5] == gmd[5] and gmc[6] != gmd[6]:
-            x.append(gmd[6])
-    p.register_command(ufwp.UFWCommandRule(gmc[2]))
     if gmc[7] != gmd[7]:
         x.append("comment")
         x.append(gmc[7])
+    p.register_command(ufwp.UFWCommandRule(gmc[2]))
     try:
         pr = p.parse_command(x)
         fw()[0].do_action(
