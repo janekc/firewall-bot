@@ -609,19 +609,26 @@ def guide_0(command, replies):
     if alert:
         alrt = f"{alert[0]}\n\n"
         alert.clear()
-    x = "1"
-    if fw()[1].get_rules_count(False) != 0:
-        x = f"1  to  {fw()[1].get_rules_count(False)}"
-    txt = f"Do you want to insert this rule at a specific position or append it at the end of all rules?\n(Default: append)\nRules are evaluated from top to bottom!\n\nAllowed values for *position*:  {x}"
+    x = fw()[1].get_rules_count(False)
+    y = "Allowed values for *position*:  1"
+    if x > 1:
+        y = f"Allowed values for *position*:  1  to  {x}"
+    elif x == 0:
+        y = "No rules set, can only append!"
+    txt = f"Do you want to insert this rule at a specific position or append it at the end of all rules?\n(Default: append)\nRules are evaluated from top to bottom!\n\n{y}"
     guide_unreg()
     dbot.commands.register(name="/s", func=guide_1)
     dbot.commands.register(name="//", func=guide_0_pl)
     d = ""
+    z = ""
     if gmc[0] != gmd[0]:
         dbot.commands.register(name="/d", func=guide_0_def)
         d = "\n🔺 /d  (default)"
+    if x != 0:
+        dbot.commands.register(name="//", func=guide_0_pl)
+        z = "\n🔺 //  *position*"
     replies.add(
-        f"{alrt}🌐 GUIDE (1/8)\n{txt}\n\n{guide_r(0)}\n\n🔺 //  *position*{d}\n🔺 /s  (skip)\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (1/8)\n{txt}\n\n{guide_r(0)}\n{z}{d}\n🔺 /s  (skip)\n🔺 /q  (quit)"
     )
 
 
