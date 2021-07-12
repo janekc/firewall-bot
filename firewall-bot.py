@@ -292,9 +292,16 @@ def rules_del(command, replies):
     clear_cmd()
     p = ufwp.UFWParser()
     p.register_command(ufwp.UFWCommandRule("delete"))
-    while fw()[1].get_rules_count(False) > 0:
+    pl = [c for c in command.payload.split() if c.strip()]
+    if len(pl) != 1:
+        alert.append("⚠️ expects one argument")
+    elif not pl[0].isnumeric():
+        alert.append("⚠️ argument must be numeric")
+    elif not 0 < int(pl[0]) <= fw()[1].get_rules_count(False):
+        alert.append("⚠️ argument must be valid rulenumber")
+    else:
         try:
-            pr = p.parse_command(["delete", "1"])
+            pr = p.parse_command(["delete", pl[0]])
             fw()[0].do_action(
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
@@ -545,7 +552,7 @@ def service_set(command, replies):
 
 # >>> GUIDE
 gmd = ["append", "incoming", None, "any", "any", "tcp/udp", "any", None]
-gmc = gmd[:]
+gmc = []
 
 
 def guide_unreg(x=None):
@@ -558,7 +565,7 @@ def guide_q(command, replies):
     """."""
     if not verify(command.message):
         return
-    gmc = gmd[:]
+    gmc.clear()
     guide_unreg("q")
     menu()
     replies.add("⚠️ guided mode cancelled")
@@ -582,7 +589,9 @@ def guide(command, replies):
     txt = "This mode will guide you through the creation of a firewall rule. Below you will find a list of rules as well as all possible commands.\nOnce started, you will be presented with the new rule and its default values and an indicator for which value is currently being edited.\nIf available, you may choose  /s  (skip)  to advance to the next step (maintaining the current value or default).\nIf available, you may choose  /d  (default)  to set a value to its default and advance to the next step.\n To (re-)edit a (skipped) setting, use  /b  (back)  to go to the previous step.\nTo exit this mode at any time, use  /q  (quit)  - all settings done so far will be discarded.\n\nEach step will explain what is being edited as well as possible commands and arguments.\n(in addition to  /d  /b  /s  /q)."
     clear_cmd()
     menu_off()
-    gmc = gmd[:]
+    gmc.clear()
+    for c in gmd:
+        gmc.append(c)
     dbot.commands.register(name="/q", func=guide_q)
     dbot.commands.register(name="/s", func=guide_0)
     x = []
@@ -1096,12 +1105,16 @@ def guide_exec(command, replies):
     x.append(gmc[2])
     if gmc[1] != gmd[1]:
         x.append("out")
+    x.append("from")
     if gmc[3] != gmd[3]:
-        x.append("from")
         x.append(gmc[3])
+    else:
+        x.append(gmd[3])
+    x.append("to")
     if gmc[4] != gmd[4]:
-        x.append("to")
         x.append(gmc[4])
+    else:
+        x.append(gmd[4])
     if gmc[5] != gmd[5]:
         x.append("proto")
         x.append(gmc[5])
@@ -1133,7 +1146,7 @@ def guide_exec(command, replies):
         x.append(f"🔹 {len(x) + 1}:  {ufwp.UFWCommandRule.get_command(c)}")
     x = "\n".join(x)
     replies.add(f"🌐 RULES\n{x}")
-    gmc = gmd[:]
+    gmc.clear()
     menu()
 
 
