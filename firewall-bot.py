@@ -202,9 +202,9 @@ def policy_set(command, replies):
     clear_cmd()
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 2:
-        alert[0] = "⚠️ expects two arguments"
+        alert.append("⚠️ expects two arguments")
     elif not set(pl).issubset({"reject", "allow", "deny"}):
-        alert[0] = "⚠️ arguments must be reject, allow or deny"
+        alert.append("⚠️ arguments must be reject, allow or deny")
     else:
         for c, d in zip(("incoming", "outgoing"), pl):
             fw()[1].set_default_policy(d, c)
@@ -238,7 +238,9 @@ def rules(command, replies):
         dbot.commands.register(name="/reset", func=rules_rst)
         y[0] = "\n🔺 /reset\nDelete all rules shown above.\n"
         dbot.commands.register(name="/move", func=rules_mv)
-        y[1] = "\n🔺 /move  *rulenumber*  *position*\nMoves an existing rule to a specific position. (experimental)\n"
+        y[
+            1
+        ] = "\n🔺 /move  *rulenumber*  *position*\nMoves an existing rule to a specific position. (experimental)\n"
     x = "\n".join(x)
     replies.add(
         f"{alrt}🌐 RULES\n{x}\n\n🔺 //  *ufw-command*\nSpecify a valid ufw-command to add or insert allow/deny/reject/limit-rules or to delete rules.\n{y[2]}{y[0]}{y[1]}\n📖 rule syntax: https://is.gd/18ivdz"
@@ -263,9 +265,9 @@ def rules_pl(command, replies):
         pl = [c for c in command.payload.split() if c.strip()]
         cmt = []
     if len(pl) < 2:
-        alert[0] = "⚠️ expects arguments"
+        alert.append("⚠️ expects arguments")
     elif pl[0] not in opt:
-        alert[0] = "⚠️ invalid *action*"
+        alert.append("⚠️ invalid *action*")
     # add elif for insert but invalid action - length of pl has to be checked
     else:
         if cmt:
@@ -277,9 +279,9 @@ def rules_pl(command, replies):
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
         except Exception as xcp:
-            alert[0] = f"⛔️ ufw exception: {xcp}"
+            alert.append(f"⛔️ ufw exception: {xcp}")
         except:
-            alert[0] = f"📛 ufw error"
+            alert.append(f"📛 ufw error")
     rules(command, replies)
 
 
@@ -297,9 +299,9 @@ def rules_del(command, replies):
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
         except Exception as xcp:
-            alert[0] = f"⛔️ ufw exception: {xcp}"
+            alert.append(f"⛔️ ufw exception: {xcp}")
         except:
-            alert[0] = f"📛 ufw error"
+            alert.append(f"📛 ufw error")
     rules(command, replies)
 
 
@@ -317,9 +319,9 @@ def rules_rst(command, replies):
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
         except Exception as xcp:
-            alert[0] = f"⛔️ ufw exception: {xcp}"
+            alert.append(f"⛔️ ufw exception: {xcp}")
         except:
-            alert[0] = f"📛 ufw error"
+            alert.append(f"📛 ufw error")
     rules(command, replies)
 
 
@@ -334,20 +336,18 @@ def rules_mv(command, replies):
         p.register_command(ufwp.UFWCommandRule(c))
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 2:
-        alert[0] = "⚠️ expects two arguments"
+        alert.append("⚠️ expects two arguments")
     elif not all([c.isnumeric() for c in pl]):
-        alert[0] = "⚠️ arguments must be numeric"
+        alert.append("⚠️ arguments must be numeric")
     else:
         x = fw()[1].get_rules_count(False)
         y = int(pl[0])
         z = int(pl[1])
         if not (y != z and 0 < y <= x and 0 < z <= x):
             # could be more elaborate
-            alert[0] = "⚠️ invalid argument(s)"
+            alert.append("⚠️ invalid argument(s)")
         else:
-            rle = ufwp.UFWCommandRule.get_command(
-                fw()[1].get_rules()[y - 1]
-            ).split()
+            rle = ufwp.UFWCommandRule.get_command(fw()[1].get_rules()[y - 1]).split()
             try:
                 pr = p.parse_command(["delete"] + rle)
                 fw()[0].do_action(
@@ -357,9 +357,9 @@ def rules_mv(command, replies):
                     True,
                 )
             except Exception as xcp:
-                alert[0] = f"⛔️ ufw exception: {xcp}"
+                alert.append(f"⛔️ ufw exception: {xcp}")
             except:
-                alert[0] = f"📛 ufw error"
+                alert.append(f"📛 ufw error")
             else:
                 w = 0
                 if y < z:
@@ -373,9 +373,9 @@ def rules_mv(command, replies):
                         True,
                     )
                 except Exception as xcp:
-                    alert[0] = f"⛔️ ufw exception: {xcp}"
+                    alert.append(f"⛔️ ufw exception: {xcp}")
                 except:
-                    alert[0] = f"📛 ufw error"
+                    alert.append(f"📛 ufw error")
     rules(command, replies)
 
 
@@ -488,11 +488,11 @@ def service_set(command, replies):
     pl = [c for c in command.payload.split() if c.strip()]
     if cmd == "del":
         if len(pl) != 1:
-            alert[0] = "⚠️ expects one argument"
+            alert.append("⚠️ expects one argument")
         elif not pl[0].isnumeric():
-            alert[0] = "⚠️ argument must be numeric"
+            alert.append("⚠️ argument must be numeric")
         elif int(pl[0]) not in dels:
-            alert[0] = "⚠️ argument must be valid rulenumber"
+            alert.append("⚠️ argument must be valid rulenumber")
         else:
             p.register_command(ufwp.UFWCommandRule("delete"))
             try:
@@ -501,18 +501,18 @@ def service_set(command, replies):
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
             except Exception as xcp:
-                alert[0] = f"⛔️ ufw exception: {xcp}"
+                alert.append(f"⛔️ ufw exception: {xcp}")
             except:
-                alert[0] = f"📛 ufw error"
+                alert.append(f"📛 ufw error")
     else:
         if len(pl) != 2:
-            alert[0] = "⚠️ expects two arguments"
+            alert.append("⚠️ expects two arguments")
         elif pl[0] not in ("allow", "deny", "reject"):
-            alert[0] = "⚠️ 1st argument must be allow, deny or reject"
+            alert.append("⚠️ 1st argument must be allow, deny or reject")
         elif not pl[1].isnumeric():
-            alert[0] = "⚠️ 2nd argument must be numeric"
+            alert.append("⚠️ 2nd argument must be numeric")
         elif not 0 < int(pl[1]) < len(serv):
-            alert[0] = "⚠️ 2nd argument must be valid ID"
+            alert.append("⚠️ 2nd argument must be valid ID")
         else:
             p.register_command(ufwp.UFWCommandRule(pl[0]))
             ppll = [pl[0], f"{serv[int(pl[1])][2]}/{serv[int(pl[1])][0]}"]
@@ -537,9 +537,9 @@ def service_set(command, replies):
                     True,
                 )
             except Exception as xcp:
-                alert[0] = f"⛔️ ufw exception: {xcp}"
+                alert.append(f"⛔️ ufw exception: {xcp}")
             except:
-                alert[0] = f"📛 ufw error"
+                alert.append(f"📛 ufw error")
     service(command, replies)
 
 
@@ -630,11 +630,11 @@ def guide_0_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        alert[0] = "⚠️ expects one argument"
+        alert.append("⚠️ expects one argument")
     elif not pl[0].isnumeric():
-        alert[0] = "⚠️ argument must be numeric"
+        alert.append("⚠️ argument must be numeric")
     elif not 0 < int(pl[0]) <= fw()[1].get_rules_count(False):
-        alert[0] = "⚠️ argument must be valid position"
+        alert.append("⚠️ argument must be valid position")
     else:
         gmc[0] = pl[0]
         guide_1(command, replies)
@@ -704,9 +704,9 @@ def guide_2_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        alert[0] = "⚠️ expects one argument"
+        alert.append("⚠️ expects one argument")
     elif pl[0] not in ("allow", "deny", "reject"):
-        alert[0] = "⚠️ argument must be allow, deny or reject"
+        alert.append("⚠️ argument must be allow, deny or reject")
     else:
         gmc[2] = pl[0]
         guide_3(command, replies)
@@ -750,9 +750,9 @@ def guide_3_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        alert[0] = "⚠️ expects one argument"
+        alert.append("⚠️ expects one argument")
     elif not ufwu.valid_address4(pl[0]):
-        alert[0] = "⚠️ argument must be host or network"
+        alert.append("⚠️ argument must be host or network")
     else:
         gmc[3] = pl[0]
         guide_4(command, replies)
@@ -796,9 +796,9 @@ def guide_4_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        alert[0] = "⚠️ expects one argument"
+        alert.append("⚠️ expects one argument")
     elif not ufwu.valid_address4(pl[0]):
-        alert[0] = "⚠️ argument must be host or network"
+        alert.append("⚠️ argument must be host or network")
     else:
         gmc[4] = pl[0]
         guide_5(command, replies)
@@ -842,9 +842,9 @@ def guide_5_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        alert[0] = "⚠️ expects one argument"
+        alert.append("⚠️ expects one argument")
     elif pl[0] not in ("tcp", "udp", "ah", "esp", "gre", "ipv6", "igmp"):
-        alert[0] = "⚠️ argument must be tcp, udp, ah, esp, gre, ipv6 or igmp"
+        alert.append("⚠️ argument must be tcp, udp, ah, esp, gre, ipv6 or igmp")
     else:
         gmc[5] = pl[0]
         guide_6(command, replies)
@@ -935,13 +935,13 @@ def guide_6_one_pl(command, replies):
     elif len(repr) > 1:
         rep = " ".join(repr)
     if rep:
-        alert[0] = rep
+        alert.append(rep)
         guide_6_one(command, replies)
     elif pl:
         gmc[6] = command.payload
         guide_7(command, replies)
     else:
-        alert[0] = "⚠️ expects argument"
+        alert.append("⚠️ expects argument")
         guide_6_one(command, replies)
 
 
@@ -980,11 +980,11 @@ def guide_6_both_pl(command, replies):
         return
     pl = [c for c in re.split(",|:", command.payload) if c.strip()]
     if len(pl) != 1:
-        alert[0] = "⚠️ expects one argument"
+        alert.append("⚠️ expects one argument")
     elif not pl[0].isnumeric():
-        alert[0] = "⚠️ argument must be numeric"
+        alert.append("⚠️ argument must be numeric")
     elif int(pl[0]) <= 0 or int(pl[0]) > 65535:
-        alert[0] = "⚠️ argument must be valid portnumber"
+        alert.append("⚠️ argument must be valid portnumber")
     else:
         gmc[6] = pl[0]
         guide_7(command, replies)
@@ -1052,7 +1052,7 @@ def guide_7_pl(command, replies):
     if not verify(command.message):
         return
     if not command.payload:
-        alert[0] = "⚠️ expects comment"
+        alert.append("⚠️ expects comment")
         guide_7(command, replies)
     else:
         gmc[7] = command.payload
@@ -1121,11 +1121,11 @@ def guide_exec(command, replies):
             True,
         )
     except Exception as xcp:
-        alert[0] = f"⛔️ ufw exception:\n{xcp}"
+        alert.append(f"⛔️ ufw exception: {xcp}")
         guide_finish(command, replies)
         return
     except:
-        alert[0] = f"📛 ufw error"
+        alert.append(f"📛 ufw error")
         guide_finish(command, replies)
         return
     x = []
