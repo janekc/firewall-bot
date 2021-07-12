@@ -56,7 +56,7 @@ def deltabot_start(bot: DeltaBot, chat=Chat):
 
 
 # >>> UTILITIES
-alert = [""]
+alert = []
 hlp = {
     "info": "Shows system info.",
     "status": "Get and set firewall status.",
@@ -184,10 +184,14 @@ def policy(command, replies):
     if not verify(command.message):
         return
     clear_cmd()
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     x = (fw()[1]._get_default_policy(), fw()[1]._get_default_policy("output"))
     dbot.commands.register(name="//", func=policy_set)
     replies.add(
-        f"🌐 POLICIES\n🔹 incoming:  '{x[0]}'\n🔹 outgoing:  '{x[1]}'\n\n🔺 //  *action*  *action*\nSet the default action for incoming (1st) and outgoing (2nd) traffic to allow, deny or reject."
+        f"{alrt}🌐 POLICIES\n🔹 incoming:  '{x[0]}'\n🔹 outgoing:  '{x[1]}'\n\n🔺 //  *action*  *action*\nSet the default action for incoming (1st) and outgoing (2nd) traffic to allow, deny or reject."
     )
 
 
@@ -198,9 +202,9 @@ def policy_set(command, replies):
     clear_cmd()
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 2:
-        replies.add("⚠️ expects two arguments")
+        alert[0] = "⚠️ expects two arguments"
     elif not set(pl).issubset({"reject", "allow", "deny"}):
-        replies.add("⚠️ arguments must be reject, allow or deny")
+        alert[0] = "⚠️ arguments must be reject, allow or deny"
     else:
         for c, d in zip(("incoming", "outgoing"), pl):
             fw()[1].set_default_policy(d, c)
@@ -218,6 +222,10 @@ def rules(command, replies):
     if not verify(command.message):
         return
     clear_cmd()
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     x = []
     for c in fw()[1].get_rules():
         x.append(f"🔹 {len(x) + 1}:  '{ufwp.UFWCommandRule.get_command(c)}'")
@@ -233,7 +241,7 @@ def rules(command, replies):
         y[1] = "\n🔺 /move  *rulenumber*  *position*\nMoves an existing rule to a specific position. (experimental)\n"
     x = "\n".join(x)
     replies.add(
-        f"🌐 RULES\n{x}\n\n🔺 //  *ufw-command*\nSpecify a valid ufw-command to add or insert allow/deny/reject/limit-rules or to delete rules.\n{y[2]}{y[0]}{y[1]}\n📖 rule syntax: https://is.gd/18ivdz"
+        f"{alrt}🌐 RULES\n{x}\n\n🔺 //  *ufw-command*\nSpecify a valid ufw-command to add or insert allow/deny/reject/limit-rules or to delete rules.\n{y[2]}{y[0]}{y[1]}\n📖 rule syntax: https://is.gd/18ivdz"
     )
 
 
@@ -255,9 +263,9 @@ def rules_pl(command, replies):
         pl = [c for c in command.payload.split() if c.strip()]
         cmt = []
     if len(pl) < 2:
-        replies.add("⚠️ expects arguments")
+        alert[0] = "⚠️ expects arguments"
     elif pl[0] not in opt:
-        replies.add("⚠️ invalid *action*")
+        alert[0] = "⚠️ invalid *action*"
     # add elif for insert but invalid action - length of pl has to be checked
     else:
         if cmt:
@@ -269,9 +277,9 @@ def rules_pl(command, replies):
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
         except Exception as xcp:
-            replies.add(f"⛔️ ufw exception:\n{xcp}")
+            alert[0] = f"⛔️ ufw exception: {xcp}"
         except:
-            replies.add(f"📛 ufw error")
+            alert[0] = f"📛 ufw error"
     rules(command, replies)
 
 
@@ -289,9 +297,9 @@ def rules_del(command, replies):
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
         except Exception as xcp:
-            replies.add(f"⛔️ ufw exception:\n{xcp}")
+            alert[0] = f"⛔️ ufw exception: {xcp}"
         except:
-            replies.add(f"📛 ufw error")
+            alert[0] = f"📛 ufw error"
     rules(command, replies)
 
 
@@ -309,9 +317,9 @@ def rules_rst(command, replies):
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
         except Exception as xcp:
-            replies.add(f"⛔️ ufw exception:\n{xcp}")
+            alert[0] = f"⛔️ ufw exception: {xcp}"
         except:
-            replies.add(f"📛 ufw error")
+            alert[0] = f"📛 ufw error"
     rules(command, replies)
 
 
@@ -326,16 +334,16 @@ def rules_mv(command, replies):
         p.register_command(ufwp.UFWCommandRule(c))
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 2:
-        replies.add("⚠️ expects two arguments")
+        alert[0] = "⚠️ expects two arguments"
     elif not all([c.isnumeric() for c in pl]):
-        replies.add("⚠️ arguments must be numeric")
+        alert[0] = "⚠️ arguments must be numeric"
     else:
         x = fw()[1].get_rules_count(False)
         y = int(pl[0])
         z = int(pl[1])
         if not (y != z and 0 < y <= x and 0 < z <= x):
             # could be more elaborate
-            replies.add("⚠️ invalid argument(s)")
+            alert[0] = "⚠️ invalid argument(s)"
         else:
             rle = ufwp.UFWCommandRule.get_command(
                 fw()[1].get_rules()[y - 1]
@@ -349,9 +357,9 @@ def rules_mv(command, replies):
                     True,
                 )
             except Exception as xcp:
-                replies.add(f"⛔️ ufw exception:\n{xcp}")
+                alert[0] = f"⛔️ ufw exception: {xcp}"
             except:
-                replies.add(f"📛 ufw error")
+                alert[0] = f"📛 ufw error"
             else:
                 w = 0
                 if y < z:
@@ -365,9 +373,9 @@ def rules_mv(command, replies):
                         True,
                     )
                 except Exception as xcp:
-                    replies.add(f"⛔️ ufw exception:\n{xcp}")
+                    alert[0] = f"⛔️ ufw exception: {xcp}"
                 except:
-                    replies.add(f"📛 ufw error")
+                    alert[0] = f"📛 ufw error"
     rules(command, replies)
 
 
@@ -381,6 +389,10 @@ def service(command, replies):
     if not verify(command.message):
         return
     clear_cmd()
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     try:
         netstat = ufwu.parse_netstat_output(fw()[1].use_ipv6())
     except Exception:
@@ -460,10 +472,10 @@ def service(command, replies):
             y = "\n🔺 /del  *rulenumber* \nDelete a corresponding rule.\n"
         x = "\n".join(x)
         replies.add(
-            f"🌐 SERVICES\n{x}\n\n🔺 //  *action*  *ID*\nAutomagically create a corresponding rule with action allow, deny or reject. This rule will match the service as closely as possible.\n{y}\nDepending on your default profile or before rules it might not be necessary to have explicit rules for every listener."
+            f"{alrt}🌐 SERVICES\n{x}\n\n🔺 //  *action*  *ID*\nAutomagically create a corresponding rule with action allow, deny or reject. This rule will match the service as closely as possible.\n{y}\nDepending on your default profile or before rules it might not be necessary to have explicit rules for every listener."
         )
     else:
-        replies.add(f"🌐 SERVICES\n\nNo listening services found.")
+        replies.add(f"{alrt}🌐 SERVICES\n\nNo listening services found.")
 
 
 def service_set(command, replies):
@@ -476,11 +488,11 @@ def service_set(command, replies):
     pl = [c for c in command.payload.split() if c.strip()]
     if cmd == "del":
         if len(pl) != 1:
-            replies.add("⚠️ expects one argument")
+            alert[0] = "⚠️ expects one argument"
         elif not pl[0].isnumeric():
-            replies.add("⚠️ argument must be numeric")
+            alert[0] = "⚠️ argument must be numeric"
         elif int(pl[0]) not in dels:
-            replies.add("⚠️ argument must be valid rulenumber")
+            alert[0] = "⚠️ argument must be valid rulenumber"
         else:
             p.register_command(ufwp.UFWCommandRule("delete"))
             try:
@@ -489,18 +501,18 @@ def service_set(command, replies):
                     pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
                 )
             except Exception as xcp:
-                replies.add(f"⛔️ ufw exception:\n{xcp}")
+                alert[0] = f"⛔️ ufw exception: {xcp}"
             except:
-                replies.add(f"📛 ufw error")
+                alert[0] = f"📛 ufw error"
     else:
         if len(pl) != 2:
-            replies.add("⚠️ expects two arguments")
+            alert[0] = "⚠️ expects two arguments"
         elif pl[0] not in ("allow", "deny", "reject"):
-            replies.add("⚠️ 1st argument must be allow, deny or reject")
+            alert[0] = "⚠️ 1st argument must be allow, deny or reject"
         elif not pl[1].isnumeric():
-            replies.add("⚠️ 2nd argument must be numeric")
+            alert[0] = "⚠️ 2nd argument must be numeric"
         elif not 0 < int(pl[1]) < len(serv):
-            replies.add("⚠️ 2nd argument must be valid ID")
+            alert[0] = "⚠️ 2nd argument must be valid ID"
         else:
             p.register_command(ufwp.UFWCommandRule(pl[0]))
             ppll = [pl[0], f"{serv[int(pl[1])][2]}/{serv[int(pl[1])][0]}"]
@@ -525,9 +537,9 @@ def service_set(command, replies):
                     True,
                 )
             except Exception as xcp:
-                replies.add(f"⛔️ ufw exception:\n{xcp}")
+                alert[0] = f"⛔️ ufw exception: {xcp}"
             except:
-                replies.add(f"📛 ufw error")
+                alert[0] = f"📛 ufw error"
     service(command, replies)
 
 
@@ -584,6 +596,10 @@ def guide_0(command, replies):
     """."""
     if not verify(command.message):
         return
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     x = "1"
     if fw()[1].get_rules_count(False) != 0:
         x = f"1  to  {fw()[1].get_rules_count(False)}"
@@ -596,7 +612,7 @@ def guide_0(command, replies):
         dbot.commands.register(name="/d", func=guide_0_def)
         d = "\n🔺 /d  (default)"
     replies.add(
-        f"🌐 GUIDE (1/8)\n{txt}\n\n{guide_r(0)}\n\n🔺 //  *position*{d}\n🔺 /s  (skip)\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (1/8)\n{txt}\n\n{guide_r(0)}\n\n🔺 //  *position*{d}\n🔺 /s  (skip)\n🔺 /q  (quit)"
     )
 
 
@@ -614,17 +630,16 @@ def guide_0_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        replies.add("⚠️ expects one argument")
-        guide_0(command, replies)
+        alert[0] = "⚠️ expects one argument"
     elif not pl[0].isnumeric():
-        replies.add("⚠️ argument must be numeric")
-        guide_0(command, replies)
+        alert[0] = "⚠️ argument must be numeric"
     elif not 0 < int(pl[0]) <= fw()[1].get_rules_count(False):
-        replies.add("⚠️ argument must be valid position")
-        guide_0(command, replies)
+        alert[0] = "⚠️ argument must be valid position"
     else:
         gmc[0] = pl[0]
         guide_1(command, replies)
+        return
+    guide_0(command, replies)
 
 
 def guide_1(command, replies):
@@ -666,6 +681,10 @@ def guide_2(command, replies):
     """."""
     if not verify(command.message):
         return
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     txt = "Which action would you like the rule to take for the targeted traffic?\nThis setting has no default value.\n\nAllowed values for *action*:\n・ allow\n    (traffic will be accepted)\n・ deny\n    (traffic will be discarded)\n・ reject\n    (traffic will be discarded and an error paket will be returned to the sender)"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_1)
@@ -675,7 +694,7 @@ def guide_2(command, replies):
         dbot.commands.register(name="/s", func=guide_3)
         s = "\n🔺 /s  (skip)"
     replies.add(
-        f"🌐 GUIDE (3/8)\n{txt}\n\n{guide_r(2)}\n\n🔺 //  *action*\n🔺 /b  (back){s}\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (3/8)\n{txt}\n\n{guide_r(2)}\n\n🔺 //  *action*\n🔺 /b  (back){s}\n🔺 /q  (quit)"
     )
 
 
@@ -685,20 +704,24 @@ def guide_2_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        replies.add("⚠️ expects one argument")
-        guide_2(command, replies)
+        alert[0] = "⚠️ expects one argument"
     elif pl[0] not in ("allow", "deny", "reject"):
-        replies.add("⚠️ argument must be allow, deny or reject")
-        guide_2(command, replies)
+        alert[0] = "⚠️ argument must be allow, deny or reject"
     else:
         gmc[2] = pl[0]
         guide_3(command, replies)
+        return
+    guide_2(command, replies)
 
 
 def guide_3(command, replies):
     """."""
     if not verify(command.message):
         return
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     txt = "Do you want this rule to filter traffic originating from a specific source?\n(Default: any)\n\nAllowed values for *source*:\n・ host  (e.g. 8.8.8.8)\n・ network  (e.g. 8.8.8.8/24)"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_2)
@@ -709,7 +732,7 @@ def guide_3(command, replies):
         dbot.commands.register(name="/d", func=guide_3_def)
         d = "\n🔺 /d  (default)"
     replies.add(
-        f"🌐 GUIDE (4/8)\n{txt}\n\n{guide_r(3)}\n\n🔺 //  *source*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (4/8)\n{txt}\n\n{guide_r(3)}\n\n🔺 //  *source*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
     )
 
 
@@ -727,20 +750,24 @@ def guide_3_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        replies.add("⚠️ expects one argument")
-        guide_3(command, replies)
+        alert[0] = "⚠️ expects one argument"
     elif not ufwu.valid_address4(pl[0]):
-        replies.add("⚠️ argument must be host or network")
-        guide_3(command, replies)
+        alert[0] = "⚠️ argument must be host or network"
     else:
         gmc[3] = pl[0]
         guide_4(command, replies)
+        return
+    guide_3(command, replies)
 
 
 def guide_4(command, replies):
     """."""
     if not verify(command.message):
         return
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     txt = "Do you want this rule to filter traffic directed towards a specific destination?\n(Default: any)\n\nAllowed values for *destination*:\n・ host (e.g. 8.8.8.8)\n・ network (e.g. 8.8.8.8/24)"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_3)
@@ -751,7 +778,7 @@ def guide_4(command, replies):
         dbot.commands.register(name="/d", func=guide_4_def)
         d = "\n🔺 /d  (default)"
     replies.add(
-        f"🌐 GUIDE (5/8)\n{txt}\n\n{guide_r(4)}\n\n🔺 //  *destination*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (5/8)\n{txt}\n\n{guide_r(4)}\n\n🔺 //  *destination*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
     )
 
 
@@ -769,20 +796,24 @@ def guide_4_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        replies.add("⚠️ expects one argument")
-        guide_4(command, replies)
+        alert[0] = "⚠️ expects one argument"
     elif not ufwu.valid_address4(pl[0]):
-        replies.add("⚠️ argument must be host or network")
-        guide_4(command, replies)
+        alert[0] = "⚠️ argument must be host or network"
     else:
         gmc[4] = pl[0]
         guide_5(command, replies)
+        return
+    guide_4(command, replies)
 
 
 def guide_5(command, replies):
     """."""
     if not verify(command.message):
         return
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     txt = "Would you like to restrict this rules filtering to a specific protocol?\n(Default: tcp and udp)\n\nAllowed values for *protocol*:\n・ tcp\n・ udp\n・ esp\n・ gre\n・ ah\n・ igmp\n・ ipv6\n\nWith the exception of default there are some restrictions:\n・ tcp and udp need specification of port(range)s.\n・ All other protocols do not allow port specification but need at least one of source/destination specified.\n(Please consult your favourite search engine to get information about these protocols)."
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_4)
@@ -793,7 +824,7 @@ def guide_5(command, replies):
         dbot.commands.register(name="/d", func=guide_5_def)
         d = "\n🔺 /d  (default)"
     replies.add(
-        f"🌐 GUIDE (6/8)\n{txt}\n\n{guide_r(5)}\n\n🔺 //  *protocol*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (6/8)\n{txt}\n\n{guide_r(5)}\n\n🔺 //  *protocol*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
     )
 
 
@@ -811,14 +842,14 @@ def guide_5_pl(command, replies):
         return
     pl = [c for c in command.payload.split() if c.strip()]
     if len(pl) != 1:
-        replies.add("⚠️ expects one argument")
-        guide_5(command, replies)
+        alert[0] = "⚠️ expects one argument"
     elif pl[0] not in ("tcp", "udp", "ah", "esp", "gre", "ipv6", "igmp"):
-        replies.add("⚠️ argument must be tcp, udp, ah, esp, gre, ipv6 or igmp")
-        guide_5(command, replies)
+        alert[0] = "⚠️ argument must be tcp, udp, ah, esp, gre, ipv6 or igmp"
     else:
         gmc[5] = pl[0]
         guide_6(command, replies)
+        return
+    guide_5(command, replies)
 
 
 def guide_5_other(replies):
@@ -847,6 +878,10 @@ def guide_6(command, replies):
 
 
 def guide_6_one(replies):
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     txt = f"For protocol {gmc[5]} you must choose port(range)s!\n\nAllowed values for *port(range)s*:\n・ a single port (e.g 80)\n・ multiple ports (e.g. 80,443)\n・ a portrange (e.g. 22:44)\n・ multiple portranges (e.g 22:44,55:77)\n・ any combination (e.g 80,55:77,22:44,443)"
     dbot.commands.register(name="/b", func=guide_5)
     dbot.commands.register(name="//", func=guide_6_one_pl)
@@ -855,7 +890,7 @@ def guide_6_one(replies):
         dbot.commands.register(name="/s", func=guide_7)
         s = "\n🔺 /s  (skip)"
     replies.add(
-        f"🌐 GUIDE (7/8)\n{txt}\n\n{guide_r(6)}\n\n🔺 //  *port(range)s*\n🔺 /b  (back){s}\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (7/8)\n{txt}\n\n{guide_r(6)}\n\n🔺 //  *port(range)s*\n🔺 /b  (back){s}\n🔺 /q  (quit)"
     )
 
 
@@ -900,17 +935,21 @@ def guide_6_one_pl(command, replies):
     elif len(repr) > 1:
         rep = " ".join(repr)
     if rep:
-        replies.add(rep)
+        alert[0] = rep
         guide_6_one(command, replies)
     elif pl:
         gmc[6] = command.payload
         guide_7(command, replies)
     else:
-        replies.add("⚠️ expects argument")
+        alert[0] = "⚠️ expects argument"
         guide_6_one(command, replies)
 
 
 def guide_6_both(replies):
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     txt = f"For protocol {gmc[5]} you may choose a port.\n(Default: any)\n\nAllowed values for *port*:\n・ a single port (e.g 80)"
     dbot.commands.register(name="/b", func=guide_5)
     dbot.commands.register(name="//", func=guide_6_both_pl)
@@ -923,7 +962,7 @@ def guide_6_both(replies):
         dbot.commands.register(name="/d", func=guide_6_both_def)
         d = "\n🔺 /d  (default)"
     replies.add(
-        f"🌐 GUIDE (7/8)\n{txt}\n\n{guide_r(6)}\n\n🔺 //  *port*{d}\n🔺 /b  (back){s}\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (7/8)\n{txt}\n\n{guide_r(6)}\n\n🔺 //  *port*{d}\n🔺 /b  (back){s}\n🔺 /q  (quit)"
     )
 
 
@@ -941,17 +980,16 @@ def guide_6_both_pl(command, replies):
         return
     pl = [c for c in re.split(",|:", command.payload) if c.strip()]
     if len(pl) != 1:
-        replies.add("⚠️ expects one argument")
-        guide_6_both(replies)
+        alert[0] = "⚠️ expects one argument"
     elif not pl[0].isnumeric():
-        replies.add("⚠️ argument must be numeric")
-        guide_6_both(replies)
+        alert[0] = "⚠️ argument must be numeric"
     elif int(pl[0]) <= 0 or int(pl[0]) > 65535:
-        replies.add("⚠️ argument must be valid portnumber")
-        guide_6_both(replies)
+        alert[0] = "⚠️ argument must be valid portnumber"
     else:
         gmc[6] = pl[0]
         guide_7(command, replies)
+        return
+    guide_6_both(replies)
 
 
 def guide_6_other(replies):
@@ -983,6 +1021,10 @@ def guide_7(command, replies):
     """."""
     if not verify(command.message):
         return
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     txt = "Would you like to add a comment to this rule?\nThis setting is optional (Default: None)\n\nYou may specify a comment using  // whateveryoulikeincludingspacesandsuch"
     guide_unreg()
     dbot.commands.register(name="/b", func=guide_6)
@@ -993,7 +1035,7 @@ def guide_7(command, replies):
         dbot.commands.register(name="/d", func=guide_7_def)
         d = "\n🔺 /d  (default)"
     replies.add(
-        f"🌐 GUIDE (8/8)\n{txt}\n\n{guide_r(7)}\n\n🔺 //  *comment*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE (8/8)\n{txt}\n\n{guide_r(7)}\n\n🔺 //  *comment*{d}\n🔺 /b  (back)\n🔺 /s  (skip)\n🔺 /q  (quit)"
     )
 
 
@@ -1010,7 +1052,7 @@ def guide_7_pl(command, replies):
     if not verify(command.message):
         return
     if not command.payload:
-        replies.add("⚠️ expects comment")
+        alert[0] = "⚠️ expects comment"
         guide_7(command, replies)
     else:
         gmc[7] = command.payload
@@ -1021,6 +1063,10 @@ def guide_finish(command, replies):
     """."""
     if not verify(command.message):
         return
+    alrt = ""
+    if alert:
+        alrt = f"{alert[0]}\n\n"
+        alert.clear()
     x = "add"
     if gmc[0] != gmd[0]:
         x = "insert"
@@ -1029,7 +1075,7 @@ def guide_finish(command, replies):
     dbot.commands.register(name="/b", func=guide_6)
     dbot.commands.register(name="/f", func=guide_exec)
     replies.add(
-        f"🌐 GUIDE\n{txt}\n\n{guide_r(8)}\n\n🔺 /f  (finish)\n🔺 /b  (back)\n🔺 /q  (quit)"
+        f"{alrt}🌐 GUIDE\n{txt}\n\n{guide_r(8)}\n\n🔺 /f  (finish)\n🔺 /b  (back)\n🔺 /q  (quit)"
     )
 
 
@@ -1075,11 +1121,11 @@ def guide_exec(command, replies):
             True,
         )
     except Exception as xcp:
-        replies.add(f"⛔️ ufw exception:\n{xcp}")
+        alert[0] = f"⛔️ ufw exception:\n{xcp}"
         guide_finish(command, replies)
         return
     except:
-        replies.add(f"📛 ufw error")
+        alert[0] = f"📛 ufw error"
         guide_finish(command, replies)
         return
     x = []
