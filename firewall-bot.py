@@ -558,7 +558,7 @@ def guide_q(command, replies):
     """."""
     if not verify(command.message):
         return
-    # gmc = gmd[:]
+    gmc = gmd[:]
     guide_unreg("q")
     menu()
     replies.add("⚠️ guided mode cancelled")
@@ -1133,6 +1133,7 @@ def guide_exec(command, replies):
         x.append(f"🔹 {len(x) + 1}:  {ufwp.UFWCommandRule.get_command(c)}")
     x = "\n".join(x)
     replies.add(f"🌐 RULES\n{x}")
+    gmc = gmd[:]
     menu()
 
 
