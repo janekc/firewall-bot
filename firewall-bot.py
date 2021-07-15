@@ -156,23 +156,59 @@ def status(command, replies):
     for c in ("input", "output"):
         if ufwu.cmd([fw()[1].iptables, "-L", "ufw-user-%s" % (c), "-n"])[0] == 1:
             x = "inactive"
-    y = ("start", "Starts firewall and enables startup on boot.")
     if x == "active":
+        dbot.commands.register(name=f"/{y[0]}", func=status_stop)
         y = ("stop", "Stopps firewall and disables startup on boot.")
-    dbot.commands.register(name=f"/{y[0]}", func=status_set)
+    else:
+        dbot.commands.register(name=f"/{y[0]}", func=status_start)
+        y = ("start", "Starts firewall and enables startup on boot.")
     replies.add(f"🌐 STATUS\n🔹 firewall:  '{x}'\n\n🔺 /{y[0]}\n{y[1]}")
 
 
-def status_set(command, replies):
+# def status(command, replies):
+#     """."""
+#     if not verify(command.message):
+#         return
+#     clear_cmd()
+#     x = "active"
+#     for c in ("input", "output"):
+#         if ufwu.cmd([fw()[1].iptables, "-L", "ufw-user-%s" % (c), "-n"])[0] == 1:
+#             x = "inactive"
+#     y = ("start", "Starts firewall and enables startup on boot.")
+#     if x == "active":
+#         y = ("stop", "Stopps firewall and disables startup on boot.")
+#     dbot.commands.register(name=f"/{y[0]}", func=status_set)
+#     replies.add(f"🌐 STATUS\n🔹 firewall:  '{x}'\n\n🔺 /{y[0]}\n{y[1]}")
+
+
+# def status_set(command, replies):
+#     """."""
+#     if not verify(command.message):
+#         return
+#     clear_cmd()
+#     cmd = command.message.text[1:].split()[0]
+#     if cmd == "start":
+#         fw()[0].set_enabled(True)
+#     elif cmd == "stop":
+#         fw()[0].set_enabled(False)
+#     status(command, replies)
+
+
+def status_start(command, replies):
     """."""
     if not verify(command.message):
         return
     clear_cmd()
-    cmd = command.message.text[1:].split()[0]
-    if cmd == "start":
-        fw()[0].set_enabled(True)
-    elif cmd == "stop":
-        fw()[0].set_enabled(False)
+    fw()[0].set_enabled(True)
+    status(command, replies)
+
+
+def status_stop(command, replies):
+    """."""
+    if not verify(command.message):
+        return
+    clear_cmd()
+    fw()[0].set_enabled(False)
     status(command, replies)
 
 
@@ -275,6 +311,7 @@ def rules_pl(command, replies):
             pl.append(" ".join(cmt))
         try:
             pr = p.parse_command(pl)
+            print(pr)
             fw()[0].do_action(
                 pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
             )
@@ -472,10 +509,10 @@ def service(command, replies):
         )
         i += 1
     if x:
-        dbot.commands.register(name="//", func=service_set)
+        dbot.commands.register(name="//", func=service_pl)
         y = "\n\n"
         if rl:
-            dbot.commands.register(name="/del", func=service_set)
+            dbot.commands.register(name="/del", func=service_del)
             y = "\n🔺 /del  *rulenumber* \nDelete a corresponding rule.\n"
         x = "\n".join(x)
         replies.add(
@@ -485,68 +522,75 @@ def service(command, replies):
         replies.add(f"{alrt}🌐 SERVICES\n\nNo listening services found.")
 
 
-def service_set(command, replies):
+def service_pl(command, replies):
     """."""
     if not verify(command.message):
         return
     clear_cmd()
-    p = ufwp.UFWParser()
-    cmd = command.message.text[1:].split()[0]
     pl = [c for c in command.payload.split() if c.strip()]
-    if cmd == "del":
-        if len(pl) != 1:
-            alert.append("⚠️ expects one argument")
-        elif not pl[0].isnumeric():
-            alert.append("⚠️ argument must be numeric")
-        elif int(pl[0]) not in dels:
-            alert.append("⚠️ argument must be valid rulenumber")
-        else:
-            p.register_command(ufwp.UFWCommandRule("delete"))
-            try:
-                pr = p.parse_command(["delete", pl[0]])
-                fw()[0].do_action(
-                    pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
-                )
-            except Exception as xcp:
-                alert.append(f"⛔️ ufw exception: {xcp}")
-            except:
-                alert.append(f"📛 ufw error")
+    if len(pl) != 2:
+        alert.append("⚠️ expects two arguments")
+    elif pl[0] not in ("allow", "deny", "reject"):
+        alert.append("⚠️ 1st argument must be allow, deny or reject")
+    elif not pl[1].isnumeric():
+        alert.append("⚠️ 2nd argument must be numeric")
+    elif not 0 <= int(pl[1]) < len(serv):
+        alert.append("⚠️ 2nd argument must be valid ID")
     else:
-        if len(pl) != 2:
-            alert.append("⚠️ expects two arguments")
-        elif pl[0] not in ("allow", "deny", "reject"):
-            alert.append("⚠️ 1st argument must be allow, deny or reject")
-        elif not pl[1].isnumeric():
-            alert.append("⚠️ 2nd argument must be numeric")
-        elif not 0 < int(pl[1]) < len(serv):
-            alert.append("⚠️ 2nd argument must be valid ID")
-        else:
-            p.register_command(ufwp.UFWCommandRule(pl[0]))
-            ppll = [pl[0], f"{serv[int(pl[1])][2]}/{serv[int(pl[1])][0]}"]
-            if serv[int(pl[1])][1] != "*":
-                ppll = [
-                    pl[0],
-                    "to",
-                    serv[int(pl[1])][1],
-                    "port",
-                    str(serv[int(pl[1])][2]),
-                    "proto",
-                    serv[int(pl[1])][0],
-                ]
-            ppll.append("comment")
-            ppll.append(f"auto for {serv[int(pl[1])][3]}")
-            try:
-                pr = p.parse_command(ppll)
-                fw()[0].do_action(
-                    pr.action,
-                    pr.data.get("rule", ""),
-                    pr.data.get("iptype", ""),
-                    True,
-                )
-            except Exception as xcp:
-                alert.append(f"⛔️ ufw exception: {xcp}")
-            except:
-                alert.append(f"📛 ufw error")
+        p = ufwp.UFWParser()
+        p.register_command(ufwp.UFWCommandRule(pl[0]))
+        ppll = [pl[0], f"{serv[int(pl[1])][2]}/{serv[int(pl[1])][0]}"]
+        if serv[int(pl[1])][1] != "*":
+            ppll = [
+                pl[0],
+                "to",
+                serv[int(pl[1])][1],
+                "port",
+                str(serv[int(pl[1])][2]),
+                "proto",
+                serv[int(pl[1])][0],
+            ]
+        ppll.append("comment")
+        ppll.append(f"auto for {serv[int(pl[1])][3]}")
+        try:
+            pr = p.parse_command(ppll)
+            fw()[0].do_action(
+                pr.action,
+                pr.data.get("rule", ""),
+                pr.data.get("iptype", ""),
+                True,
+            )
+        except Exception as xcp:
+            alert.append(f"⛔️ ufw exception: {xcp}")
+        except:
+            alert.append(f"📛 ufw error")
+    service(command, replies)
+
+
+def service_del(command, replies):
+    """."""
+    if not verify(command.message):
+        return
+    clear_cmd()
+    pl = [c for c in command.payload.split() if c.strip()]
+    if len(pl) != 1:
+        alert.append("⚠️ expects one argument")
+    elif not pl[0].isnumeric():
+        alert.append("⚠️ argument must be numeric")
+    elif int(pl[0]) not in dels:
+        alert.append("⚠️ argument must be valid rulenumber")
+    else:
+        p = ufwp.UFWParser()
+        p.register_command(ufwp.UFWCommandRule("delete"))
+        try:
+            pr = p.parse_command(["delete", pl[0]])
+            fw()[0].do_action(
+                pr.action, pr.data.get("rule", ""), pr.data.get("iptype", ""), True
+            )
+        except Exception as xcp:
+            alert.append(f"⛔️ ufw exception: {xcp}")
+        except:
+            alert.append(f"📛 ufw error")
     service(command, replies)
 
 
@@ -618,7 +662,7 @@ def guide_0(command, replies):
     txt = f"Do you want to insert this rule at a specific position or append it at the end of all rules?\n(Default: append)\nRules are evaluated from top to bottom!\n\n{y}"
     guide_unreg()
     dbot.commands.register(name="/s", func=guide_1)
-    dbot.commands.register(name="//", func=guide_0_pl)
+    #dbot.commands.register(name="//", func=guide_0_pl)
     d = ""
     z = ""
     if gmc[0] != gmd[0]:
@@ -952,13 +996,13 @@ def guide_6_one_pl(command, replies):
         rep = " ".join(repr)
     if rep:
         alert.append(rep)
-        guide_6_one(command, replies)
+        guide_6_one(replies)
     elif pl:
         gmc[6] = command.payload
         guide_7(command, replies)
     else:
         alert.append("⚠️ expects argument")
-        guide_6_one(command, replies)
+        guide_6_one(replies)
 
 
 def guide_6_both(replies):
