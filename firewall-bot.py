@@ -160,7 +160,7 @@ def status(command, replies):
         dbot.commands.register(name="/stop", func=status_stop)
         replies.add(f"🌐 STATUS\n🔹 firewall:  'active'\n\n🔺 /stop\nStopps firewall and disables startup on boot.")
     else:
-        dbot.commands.register(name=f"/{y[0]}", func=status_start)
+        dbot.commands.register(name="/start", func=status_start)
         replies.add(f"🌐 STATUS\n🔹 firewall:  'inactive'\n\n🔺 /start\nStarts firewall and enables startup on boot.")
 
 
