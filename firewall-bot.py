@@ -165,35 +165,6 @@ def status(command, replies):
     replies.add(f"🌐 STATUS\n🔹 firewall:  '{x}'\n\n🔺 /{y[0]}\n{y[1]}")
 
 
-# def status(command, replies):
-#     """."""
-#     if not verify(command.message):
-#         return
-#     clear_cmd()
-#     x = "active"
-#     for c in ("input", "output"):
-#         if ufwu.cmd([fw()[1].iptables, "-L", "ufw-user-%s" % (c), "-n"])[0] == 1:
-#             x = "inactive"
-#     y = ("start", "Starts firewall and enables startup on boot.")
-#     if x == "active":
-#         y = ("stop", "Stopps firewall and disables startup on boot.")
-#     dbot.commands.register(name=f"/{y[0]}", func=status_set)
-#     replies.add(f"🌐 STATUS\n🔹 firewall:  '{x}'\n\n🔺 /{y[0]}\n{y[1]}")
-
-
-# def status_set(command, replies):
-#     """."""
-#     if not verify(command.message):
-#         return
-#     clear_cmd()
-#     cmd = command.message.text[1:].split()[0]
-#     if cmd == "start":
-#         fw()[0].set_enabled(True)
-#     elif cmd == "stop":
-#         fw()[0].set_enabled(False)
-#     status(command, replies)
-
-
 def status_start(command, replies):
     """."""
     if not verify(command.message):
